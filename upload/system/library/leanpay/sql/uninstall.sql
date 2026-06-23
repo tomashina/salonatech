@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS `PREFIX_mojakoda_leanpay_transactions`;
