@@ -4,6 +4,10 @@
 $_['heading_title']                = 'Nadzorna ploča';
 
 // Text
+$_['text_supplier_import']         = 'Import dobavljača';
+$_['text_excetra_import_help']     = 'Import Excetra artikala iz XML feeda, uparivanje kategorija te update cijena i količina.';
+$_['button_excetra_import']        = 'Otvori Excetra import';
+
 // $_['text_order_total']             = 'Ukupno narudžbi'; // postojalo u verziji OC 2.2.0.0
 // $_['text_customer_total']          = 'Ukupno kupaca'; // postojalo u verziji OC 2.2.0.0
 // $_['text_sale_total']              = 'Ukupna prodaja'; // postojalo u verziji OC 2.2.0.0

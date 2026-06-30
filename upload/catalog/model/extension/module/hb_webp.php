@@ -1,50 +1,39 @@
 <?php
 class ModelExtensionModuleHbWebp extends Model {
     public function getUncompressedImages(){
-		$sql = "SELECT * FROM `".DB_PREFIX."image_cache` ORDER BY RAND() LIMIT 0, ".$this->config->get('hb_webp_cron_limit');
+        $limit = (int)$this->config->get('hb_webp_cron_limit');
+
+        if ($limit < 1) {
+            $limit = 10;
+        }
+
+        $limit = min($limit, 100);
+
+		$sql = "SELECT `id`, `path` FROM `".DB_PREFIX."image_cache` ORDER BY `id` ASC LIMIT ".$limit;
 		$query = $this->db->query($sql);
 		return $query->rows;
 	}
 
-    public function getCachedImages(){		
+    public function getCachedImages(){
 		$this->deleteAll();
-		
+
 		$image_cache_folder = DIR_IMAGE.'cache/';
-		
+
 		if(is_dir($image_cache_folder)) {
-			$files = $this->getDirContents($image_cache_folder);
-			
-			foreach ($files as $file) {
-				if (!empty($file)) {
-					$this->insertPath($file);
-				}
-			}
-			$this->addlog('Uncompressed WebP images logged to database!');
+            $total = $this->storePendingImages($image_cache_folder);
+			$this->addlog($total.' uncompressed WebP image paths logged to database!');
 		}else{
             $this->addlog('No Image Cache folder found!');
 		}
 	}
 
-    public function getDirContents($dir, &$results = array()) {		
-		$files = scandir($dir);
-	
-		foreach ($files as $key => $value) {
-			$path = realpath($dir . DIRECTORY_SEPARATOR . $value);
-			if (!is_dir($path)) {
-				if ((strpos($path, '.html') === false) and (strpos($path, '.gif') === false) and (strpos($path, '.webp') === false)) {
-					$wp_path 		= utf8_substr($path, 0, utf8_strrpos($path, "."));
-					$wp_path		= str_replace('/cache/','/webp/',$wp_path);
-					$wp_path		= str_replace('\\cache\\','\\webp\\',$wp_path); //localhost windows testing
-					if (!file_exists($wp_path.'.webp') and strpos($wp_path, '.webp') === false) {
-						$results[] = $path;
-					}
-				}
-			} else if ($value != "." && $value != "..") {
-				$this->getDirContents($path, $results );
-				//$results[] = $path; //stores the directory name
-			}
-		}
-	
+    public function getDirContents($dir, &$results = array()) {
+        $this->walkCacheFiles($dir, function($path) use (&$results) {
+            if ($this->needsWebpCompression($path)) {
+                $results[] = $path;
+            }
+        });
+
 		return $results;
 	}
 
@@ -52,13 +41,113 @@ class ModelExtensionModuleHbWebp extends Model {
 		$this->db->query("INSERT INTO `".DB_PREFIX."image_cache` (`path`) VALUES ('".$this->db->escape($path)."')");
 	}
 
+    public function insertPaths($paths){
+        if (empty($paths)) {
+            return;
+        }
+
+        $values = array();
+
+        foreach ($paths as $path) {
+            if ($path !== '') {
+                $values[] = "('".$this->db->escape($path)."')";
+            }
+        }
+
+        if ($values) {
+            $this->db->query("INSERT INTO `".DB_PREFIX."image_cache` (`path`) VALUES ".implode(',', $values));
+        }
+    }
+
     public function deleteAll(){
-		$this->db->query("TRUNCATE`".DB_PREFIX."image_cache`");
+		$this->db->query("TRUNCATE TABLE `".DB_PREFIX."image_cache`");
 	}
 
     public function deleteId($id){
 		$this->db->query("DELETE FROM `".DB_PREFIX."image_cache` WHERE `id` = '".(int)$id."'");
 	}
+
+    public function deleteIds($ids){
+        if (empty($ids)) {
+            return;
+        }
+
+        $clean_ids = array();
+
+        foreach ($ids as $id) {
+            $id = (int)$id;
+
+            if ($id > 0) {
+                $clean_ids[] = $id;
+            }
+        }
+
+        if ($clean_ids) {
+            $this->db->query("DELETE FROM `".DB_PREFIX."image_cache` WHERE `id` IN (".implode(',', $clean_ids).")");
+        }
+    }
+
+    private function storePendingImages($dir) {
+        $total = 0;
+        $batch = array();
+        $batch_size = 500;
+
+        $this->walkCacheFiles($dir, function($path) use (&$total, &$batch, $batch_size) {
+            if ($this->needsWebpCompression($path)) {
+                $batch[] = $path;
+                $total++;
+
+                if (count($batch) >= $batch_size) {
+                    $this->insertPaths($batch);
+                    $batch = array();
+                }
+            }
+        });
+
+        if ($batch) {
+            $this->insertPaths($batch);
+        }
+
+        return $total;
+    }
+
+    private function walkCacheFiles($dir, $callback) {
+        try {
+            $directory = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+            $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::LEAVES_ONLY);
+
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    call_user_func($callback, $file->getPathname());
+                }
+            }
+        } catch (Exception $e) {
+            $this->addlog('Issue while scanning image cache. Issue: '.$e->getMessage());
+        }
+    }
+
+    private function needsWebpCompression($path) {
+        if (!$this->isCompressibleCacheImage($path)) {
+            return false;
+        }
+
+        $webp_destination = $this->getWebpDestinationPath($path);
+
+        return !is_file($webp_destination) || filemtime($path) > filemtime($webp_destination);
+    }
+
+    private function isCompressibleCacheImage($path) {
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return in_array($extension, array('jpg', 'jpeg', 'png'));
+    }
+
+    public function getWebpDestinationPath($sourcePath) {
+        $basePath = str_replace(array('\\cache\\', '/cache/'), array(DIRECTORY_SEPARATOR . 'webp' . DIRECTORY_SEPARATOR, '/webp/'), $sourcePath);
+        $withoutExtension = substr($basePath, 0, strrpos($basePath, '.'));
+
+        return $withoutExtension . '.webp';
+    }
 
     public function addlog($text = ''){
         if (!file_exists(DIR_LOGS)) {

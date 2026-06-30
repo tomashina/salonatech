@@ -38,6 +38,7 @@ $_['text_option']                    = 'Opcije';
 $_['text_order']                     = 'Narudžbe';
 $_['text_order_status']              = 'Statusi narudžbi';
 $_['text_product']                   = 'Artikli';
+$_['text_excetra_import']             = 'Excetra B2B import';
 $_['text_reports']                   = 'Izvještaji';
 $_['text_report_sale']               = 'Prodaje';
 $_['text_report_sale_order']         = 'Narudžbe';

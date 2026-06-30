@@ -93,7 +93,7 @@
 	                                    <span class="badge extended_warranty_badge"><i>{{ text_extended_warranty_badge }}</i></span>
 	                                {% endif %}
 
-	                                <a class="{% if not images %}link cloud-zoom{% endif %} {% if product_layout == 'full-width' %}link{% else %}cloud-zoom{% endif %}" id="main-image" href="{{ popup }}" rel="position:'inside', showTitle: false"><img src="{{ thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></a>
+	                                <a class="{% if not images %}link cloud-zoom{% endif %} {% if product_layout == 'full-width' %}link{% else %}cloud-zoom{% endif %}" id="main-image" href="{{ popup }}" rel="position:'inside', showTitle: false"><img src="{{ thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" width="{{ img_w }}" height="{{ img_h }}" fetchpriority="high" loading="eager" decoding="async" /></a>
 	                            </div>
                         {% endif %}
 
@@ -101,11 +101,11 @@
                             <ul class="image-additional">
                                 {% for image in images %}
                                     <li>
-                                        <a class="link {% if product_layout != 'full-width' %}cloud-zoom-gallery locked{% endif %}" href="{{ image.popup }}" rel="useZoom: 'main-image', smallImage: '{{ image.thumb_lg }}'"><img src="{{ image.thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></a>
+                                        <a class="link {% if product_layout != 'full-width' %}cloud-zoom-gallery locked{% endif %}" href="{{ image.popup }}" rel="useZoom: 'main-image', smallImage: '{{ image.thumb_lg }}'"><img src="{{ image.thumb }}" title="{{ heading_title }}" alt="{{ heading_title }}" width="{{ img_a_w }}" height="{{ img_a_h }}" loading="lazy" decoding="async" /></a>
                                     </li>
                                 {% endfor %}
                                 {% if thumb and (product_layout != "full-width") %}
-                                    <li><a class="link cloud-zoom-gallery locked active" href="{{ popup }}" rel="useZoom: 'main-image', smallImage: '{{ thumb }}'"><img src="{{ thumb_sm }}" title="{{ heading_title }}" alt="{{ heading_title }}" /></a></li>
+                                    <li><a class="link cloud-zoom-gallery locked active" href="{{ popup }}" rel="useZoom: 'main-image', smallImage: '{{ thumb }}'"><img src="{{ thumb_sm }}" title="{{ heading_title }}" alt="{{ heading_title }}" width="{{ img_a_w }}" height="{{ img_a_h }}" loading="lazy" decoding="async" /></a></li>
                                 {% endif %}
                             </ul>
                         {% endif %}
@@ -200,7 +200,7 @@
                                 {% if energy_class_id %}
                                     <div class="popup-enabled" id="energyImageModal{{product_id}}">
                                         <div class="popup-content" style="margin: 50px auto; width: 300px; height: 600px; background-color: white; text-align: center;">
-                                            <img src="image/{{ thumb_energy }}">
+                                            <img src="image/{{ thumb_energy }}" alt="{{ heading_title }}" loading="lazy" decoding="async">
                                         </div>
                                     </div>
                                 {% endif %}
@@ -861,9 +861,10 @@
 </script>
 
 
-<script><!--
-    $('.date').datetimepicker({
-        pickTime: false
+	{% if has_datetime_options %}
+	<script><!--
+	    $('.date').datetimepicker({
+	        pickTime: false
     });
 
     $('.datetime').datetimepicker({
@@ -871,11 +872,15 @@
         pickTime: true
     });
 
-    $('.time').datetimepicker({
-        pickDate: false
-    });
+	    $('.time').datetimepicker({
+	        pickDate: false
+	    });
+	    //--></script>
+	{% endif %}
 
-    $('button[id^=\'button-upload\']').on('click', function() {
+	<script><!--
+
+	    $('button[id^=\'button-upload\']').on('click', function() {
         var node = this;
 
         $('#form-upload').remove();

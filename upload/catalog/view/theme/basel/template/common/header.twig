@@ -9,7 +9,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="google-site-verification" content="JZYE6lTXt0bMjmAkTQWZTl0tdU8HpxuXJcM74NUmpg4" />
+
+  <meta name="google-site-verification" content="nBsodi1mJeY-NydH_wpmeJFWT5rzPcqKbNWrTcMFkrs" />
 <title>{{ title }}</title>
 <script>
 (function () {
@@ -50,7 +51,7 @@
 }());
 </script>
 <base href="{{ base }}" />
-<meta name="google-site-verification" content="eZXFBfY_q6xpP_ZT043YaAnDL4H8BkCPtxx3Atwko3o" />
+
 {% if description %}<meta name="description" content="{{ description }}" />{% endif %}
 {% if keywords %}<meta name="keywords" content= "{{ keywords }}" />{% endif %}
 <!-- Load essential resources -->
@@ -60,13 +61,24 @@
 <script src="catalog/view/theme/basel/js/slick.min.js"></script>
 <script src="catalog/view/theme/basel/js/basel_common.js"></script>
 <!-- Main stylesheet -->
-<link href="catalog/view/theme/basel/stylesheet/stylesheet.css" rel="stylesheet">
+<link href="catalog/view/theme/basel/stylesheet/stylesheet.css?v=1.02" rel="stylesheet">
 
 <!-- Mandatory Theme Settings CSS -->
 <style id="basel-mandatory-css">{{ basel_mandatory_css }}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Plugin Stylesheet(s) -->
 {% for style in styles %}
+{% if 'fonts.googleapis.com' in style.href %}
+{% set font_href = style.href %}
+{% if 'display=' not in font_href %}
+{% set font_href = font_href ~ '&display=swap' %}
+{% endif %}
+<link rel="preload" as="style" href="{{ font_href }}" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link href="{{ font_href }}" rel="{{ style.rel }}" media="{{ style.media }}" /></noscript>
+{% else %}
 <link href="{{ style.href }}" rel="{{ style.rel }}" media="{{ style.media }}" />
+{% endif %}
 {% endfor %}
 {% if direction == 'rtl' %}
 <link href="catalog/view/theme/basel/stylesheet/rtl.css" rel="stylesheet">
@@ -78,7 +90,9 @@
 <!-- Page specific meta information -->
 {% for link in links %}
 {% if link.rel == 'image' %}
-
+{% if link.href %}
+<link rel="preload" as="image" href="{{ link.href }}" fetchpriority="high" />
+{% endif %}
 {% else %}
 <link href="{{ link.href }}" rel="{{ link.rel }}" />
 {% endif %}

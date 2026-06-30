@@ -230,17 +230,23 @@ class ControllerProductProduct extends Controller {
 				'href' => $this->url->link('product/product', $url . '&product_id=' . $this->request->get['product_id'])
 			);
 
+			$meta_description = trim($product_info['meta_description']);
+
+			if (!$meta_description) {
+				$meta_description = trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8'))));
+				$meta_description = utf8_substr($meta_description, 0, 160);
+			}
+
+			if (!$meta_description) {
+				$meta_description = trim($product_info['name'] . ($product_info['manufacturer'] ? ' - ' . $product_info['manufacturer'] : ''));
+			}
+
 			$this->document->setTitle($product_info['meta_title']);
-			$this->document->setDescription($product_info['meta_description']);
+			$this->document->setDescription($meta_description);
 			$this->document->setKeywords($product_info['meta_keyword']);
 			$this->document->addLink($this->url->link('product/product', 'product_id=' . $this->request->get['product_id']), 'canonical');
 			$this->document->addScript('catalog/view/javascript/jquery/magnific/jquery.magnific-popup.min.js');
 			$this->document->addStyle('catalog/view/javascript/jquery/magnific/magnific-popup.css');
-			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment.min.js');
-			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment-with-locales.min.js');
-			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.js');
-			$this->document->addStyle('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css');
-
 			$data['heading_title'] = $product_info['name'];
 
 			$data['text_minimum'] = sprintf($this->language->get('text_minimum'), $product_info['minimum']);
@@ -394,9 +400,14 @@ class ControllerProductProduct extends Controller {
 			}
 
 			$data['options'] = array();
+			$data['has_datetime_options'] = false;
 
 			foreach ($this->model_catalog_product->getProductOptions($this->request->get['product_id']) as $option) {
 				$product_option_value_data = array();
+
+				if (in_array($option['type'], array('date', 'datetime', 'time'), true)) {
+					$data['has_datetime_options'] = true;
+				}
 
 				foreach ($option['product_option_value'] as $option_value) {
 					if (!$option_value['subtract'] || ($option_value['quantity'] > 0)) {
@@ -425,10 +436,17 @@ class ControllerProductProduct extends Controller {
 					'type'                 => $option['type'],
 					'value'                => $option['value'],
 					'required'             => $option['required']
-				);
-			}
+					);
+				}
 
-			if ($product_info['minimum']) {
+				if ($data['has_datetime_options']) {
+					$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment.min.js');
+					$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment/moment-with-locales.min.js');
+					$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.js');
+					$this->document->addStyle('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css');
+				}
+
+				if ($product_info['minimum']) {
 				$data['minimum'] = $product_info['minimum'];
 			} else {
 				$data['minimum'] = 1;

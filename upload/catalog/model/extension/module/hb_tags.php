@@ -217,10 +217,12 @@ class ModelExtensionModuleHbTags extends Model {
         // Extract words
         $words = array_filter(
             explode(' ', $string),
-            fn($word) => $word !== '' 
-                && !in_array($word, $stopWords) 
-                && strlen($word) > 3 
-                && !is_numeric($word)
+            function ($word) use ($stopWords) {
+                return $word !== ''
+                    && !in_array($word, $stopWords)
+                    && strlen($word) > 3
+                    && !is_numeric($word);
+            }
         );
     
         // Count word occurrences
@@ -242,7 +244,9 @@ class ModelExtensionModuleHbTags extends Model {
         // Extract and filter tags
         $tags = array_filter(
             explode(' ', $string),
-            fn($tag) => strlen($tag) > 3 && !in_array($tag, $stopwords)
+            function ($tag) use ($stopwords) {
+                return strlen($tag) > 3 && !in_array($tag, $stopwords);
+            }
         );
     
         return array_values($tags); // Reset array keys

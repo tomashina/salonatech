@@ -2,9 +2,9 @@
     <div class="edge">
 <div class="image" {% if columns == 'list' %}style="width:{{ img_width }}px"{% endif %}>
     <a href="{{ product.href }}">
-    <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" />
+    <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}" loading="lazy" decoding="async" />
     {% if product.thumb2 %}
-    <img class="thumb2" src="{{ product.thumb2 }}" alt="{{ product.name }}" title="{{ product.name }}" />
+    <img class="thumb2" src="{{ product.thumb2 }}" alt="{{ product.name }}" title="{{ product.name }}" loading="lazy" decoding="async" />
     {% endif %}
     </a>
 {% if product.price and product.special and salebadge_status %}

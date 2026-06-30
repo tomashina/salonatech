@@ -2210,6 +2210,12 @@ class ControllerExtensionModuleCatalogProduct extends ControllerExtensionModuleP
 
 		$items_per_page = $this->config->get('module_product_quick_edit_items_per_page');
 		$data['items_per_page'] = ($items_per_page) ? $items_per_page : $this->config->get('config_limit_admin');
+		$data['client_side_cache_pages'] = 1;
+
+		if ((int)$data['items_per_page'] > 0 && (int)$this->config->get('module_product_quick_edit_cache_size') > 0) {
+			$data['client_side_cache_pages'] = (int)ceil((int)$this->config->get('module_product_quick_edit_cache_size') / (int)$data['items_per_page']);
+			$data['client_side_cache_pages'] = min($data['client_side_cache_pages'], 3);
+		}
 
 		$data['module_product_quick_edit_server_side_caching'] = $this->config->get('module_product_quick_edit_server_side_caching');
 		$data['module_product_quick_edit_client_side_caching'] = $this->config->get('module_product_quick_edit_client_side_caching');

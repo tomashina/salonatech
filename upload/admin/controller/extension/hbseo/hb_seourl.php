@@ -691,13 +691,18 @@ class ControllerExtensionHbseoHbSeourl extends Controller {
 	}
 
 	//EVENTS
-	public function event_add_product(&$route, &$args){
+	public function event_add_product(&$route, &$args, &$output = null){
 		if (!$this->config->get('hb_seourl_auto')){
 			return false;
 		}
 		//$this->log->write($args);
 
-		$product_id = $args[0];
+		$product_id = isset($args[0]) && is_array($args[0]) ? $output : $args[0];
+
+		if (!$product_id) {
+			return false;
+		}
+
 		$this->load->model('setting/store');
 
 		$data['stores'] = [];
@@ -748,13 +753,18 @@ class ControllerExtensionHbseoHbSeourl extends Controller {
 		}
 	}
 
-	public function event_add_category(&$route, &$args){
+	public function event_add_category(&$route, &$args, &$output = null){
 		if (!$this->config->get('hb_seourl_auto')){
 			return false;
 		}
 		//$this->log->write($args);
 
-		$category_id = $args[0];
+		$category_id = isset($args[0]) && is_array($args[0]) ? $output : $args[0];
+
+		if (!$category_id) {
+			return false;
+		}
+
 		$this->load->model('setting/store');
 
 		$data['stores'] = [];
@@ -799,13 +809,18 @@ class ControllerExtensionHbseoHbSeourl extends Controller {
 		}
 	}
 
-	public function event_add_brand(&$route, &$args){
+	public function event_add_brand(&$route, &$args, &$output = null){
 		if (!$this->config->get('hb_seourl_auto')){
 			return false;
 		}
 		//$this->log->write($args);
 
-		$manufacturer_id = $args[0];
+		$manufacturer_id = isset($args[0]) && is_array($args[0]) ? $output : $args[0];
+
+		if (!$manufacturer_id) {
+			return false;
+		}
+
 		$this->load->model('setting/store');
 
 		$data['stores'] = [];
@@ -850,13 +865,18 @@ class ControllerExtensionHbseoHbSeourl extends Controller {
 		}
 	}
 
-	public function event_add_information(&$route, &$args){
+	public function event_add_information(&$route, &$args, &$output = null){
 		if (!$this->config->get('hb_seourl_auto')){
 			return false;
 		}
 		//$this->log->write($args);
 
-		$information_id = $args[0];
+		$information_id = isset($args[0]) && is_array($args[0]) ? $output : $args[0];
+
+		if (!$information_id) {
+			return false;
+		}
+
 		$this->load->model('setting/store');
 
 		$data['stores'] = [];

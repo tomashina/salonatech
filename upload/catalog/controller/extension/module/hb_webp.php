@@ -14,33 +14,56 @@ class ControllerExtensionModuleHbWebp extends Controller {
         }
 
         $paths = $this->model_extension_module_hb_webp->getUncompressedImages();
-        $processed = [];
-        $errors = [];
+        $delete_ids = array();
+        $processed = 0;
+        $skipped = 0;
+        $errors = 0;
 
 		if (!empty($paths)) {
 			foreach ($paths as $path) {
 				$id = $path['id'];
 				$webp_source = $path['path'];
 
+				if (!is_file($webp_source)) {
+					$delete_ids[] = $id;
+					$skipped++;
+					continue;
+				}
+
 				list($width_orig, $height_orig, $image_type) = @getimagesize($webp_source);
 
-				if (in_array($image_type, [IMAGETYPE_PNG, IMAGETYPE_JPEG])) {
+				if (in_array($image_type, array(IMAGETYPE_PNG, IMAGETYPE_JPEG))) {
 					$webp_destination = $this->getWebpDestinationPath($webp_source);
 
-					try {
-						WebPConvert::convert($webp_source, $webp_destination, []);
-						$processed[] = 'Image compressed: ' . $webp_source. ' to ' . $webp_destination;
-						$this->model_extension_module_hb_webp->deleteId($id);
-					} catch (Exception $e) {
-						$errors[] = "Error processing image {$webp_source}: " . $e->getMessage();
+					if (is_file($webp_destination) && filemtime($webp_destination) >= filemtime($webp_source)) {
+						$delete_ids[] = $id;
+						$skipped++;
+						continue;
 					}
+
+					if (!is_dir(dirname($webp_destination))) {
+						@mkdir(dirname($webp_destination), 0777, true);
+					}
+
+					try {
+						WebPConvert::convert($webp_source, $webp_destination, array());
+						$delete_ids[] = $id;
+						$processed++;
+					} catch (Exception $e) {
+						$errors++;
+						$this->model_extension_module_hb_webp->addlog('Error processing image '.$webp_source.': '.$e->getMessage());
+					}
+				} else {
+					$delete_ids[] = $id;
+					$skipped++;
 				}
 			}
 
-			// Log errors
-			foreach ($processed as $process) {
-				$this->model_extension_module_hb_webp->addlog($process);
+			if ($delete_ids) {
+				$this->model_extension_module_hb_webp->deleteIds($delete_ids);
 			}
+
+			$this->model_extension_module_hb_webp->addlog('Processed: '.$processed.', skipped: '.$skipped.', errors: '.$errors);
 		}else{
 			$this->model_extension_module_hb_webp->getCachedImages();
 		}

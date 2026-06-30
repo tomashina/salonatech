@@ -300,155 +300,160 @@ class ModelExtensionModuleProductQuickEdit extends Model {
 		$columns = isset($data['columns']) ? $data['columns'] : array();
 		$actions = isset($data['actions']) ? $data['actions'] : array();
 
-		$sql = "SELECT SQL_CALC_FOUND_ROWS pd.*, p.*";
+		$select_sql = "SELECT pd.*, p.*";
+		$count_select_sql = "SELECT p.product_id";
 
-		$sql .= ", (SELECT price FROM " . DB_PREFIX . "product_special WHERE product_id = p.product_id AND (date_start = '0000-00-00' OR date_start < NOW() AND (date_end = '0000-00-00' OR date_end > NOW())) ORDER BY priority, price LIMIT 1) AS special_price";
+		$select_sql .= ", (SELECT price FROM " . DB_PREFIX . "product_special WHERE product_id = p.product_id AND (date_start = '0000-00-00' OR date_start < NOW() AND (date_end = '0000-00-00' OR date_end > NOW())) ORDER BY priority, price LIMIT 1) AS special_price";
 
 		if (in_array("subtract", $columns)) {
-			$sql .= ", IF(p.subtract, '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS subtract_text";
+			$select_sql .= ", IF(p.subtract, '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS subtract_text";
+			$count_select_sql .= ", IF(p.subtract, '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS subtract_text";
 		}
 
 		if (in_array("shipping", $columns)) {
-			$sql .= ", IF(p.shipping, '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS shipping_text";
+			$select_sql .= ", IF(p.shipping, '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS shipping_text";
+			$count_select_sql .= ", IF(p.shipping, '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS shipping_text";
 		}
 
 		if (in_array("image", $columns)) {
-			$sql .= ", IF(p.image IS NOT NULL AND p.image <> '' AND p.image <> 'no_image.png', '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS image_text";
+			$select_sql .= ", IF(p.image IS NOT NULL AND p.image <> '' AND p.image <> 'no_image.png', '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS image_text";
+			$count_select_sql .= ", IF(p.image IS NOT NULL AND p.image <> '' AND p.image <> 'no_image.png', '" . $this->db->escape($this->language->get('text_yes')) . "','" .$this->db->escape($this->language->get('text_no')) . "') AS image_text";
 		}
 
 		if (in_array("status", $columns)) {
-			$sql .= ", IF(p.status, '" . $this->db->escape($this->language->get('text_enabled')) . "','" .$this->db->escape($this->language->get('text_disabled')) . "') AS status_text";
+			$select_sql .= ", IF(p.status, '" . $this->db->escape($this->language->get('text_enabled')) . "','" .$this->db->escape($this->language->get('text_disabled')) . "') AS status_text";
+			$count_select_sql .= ", IF(p.status, '" . $this->db->escape($this->language->get('text_enabled')) . "','" .$this->db->escape($this->language->get('text_disabled')) . "') AS status_text";
 		}
 
 		if (in_array("manufacturer", $columns)) {
-			$sql .= ", m.name AS manufacturer_text";
+			$select_sql .= ", m.name AS manufacturer_text";
 		}
 
 		if (in_array("tax_class", $columns)) {
-			$sql .= ", tc.title AS tax_class_text, tc.tax_class_id";
+			$select_sql .= ", tc.title AS tax_class_text, tc.tax_class_id";
 		}
 
 		if (in_array("stock_status", $columns)) {
-			$sql .= ", ss.name AS stock_status_text, ss.stock_status_id";
+			$select_sql .= ", ss.name AS stock_status_text, ss.stock_status_id";
 		}
 
 		if (in_array("length_class", $columns)) {
-			$sql .= ", lcd.title AS length_class_text, lcd.length_class_id";
+			$select_sql .= ", lcd.title AS length_class_text, lcd.length_class_id";
 		}
 
 		if (in_array("weight_class", $columns)) {
-			$sql .= ", wcd.title AS weight_class_text, wcd.weight_class_id";
+			$select_sql .= ", wcd.title AS weight_class_text, wcd.weight_class_id";
 		}
 
 		if (in_array("download", $columns)) {
-			$sql .= ", GROUP_CONCAT(DISTINCT dd.name ORDER BY dd.name ASC SEPARATOR '<br/>') AS download_text, GROUP_CONCAT(DISTINCT dd.download_id ORDER BY dd.name ASC SEPARATOR '_') AS download";
+			$select_sql .= ", GROUP_CONCAT(DISTINCT dd.name ORDER BY dd.name ASC SEPARATOR '<br/>') AS download_text, GROUP_CONCAT(DISTINCT dd.download_id ORDER BY dd.name ASC SEPARATOR '_') AS download";
 		}
 
 		if (in_array("filter", $columns)) {
-			$sql .= ", GROUP_CONCAT(DISTINCT CONCAT_WS(' &gt; ', fgd.name, fd.name) ORDER BY CONCAT_WS(' &gt; ', fgd.name, fd.name) ASC SEPARATOR '<br/>') AS filter_text, GROUP_CONCAT(DISTINCT fd.filter_id ORDER BY CONCAT_WS(' &gt; ', fgd.name, fd.name) ASC SEPARATOR '_') AS filter";
+			$select_sql .= ", GROUP_CONCAT(DISTINCT CONCAT_WS(' &gt; ', fgd.name, fd.name) ORDER BY CONCAT_WS(' &gt; ', fgd.name, fd.name) ASC SEPARATOR '<br/>') AS filter_text, GROUP_CONCAT(DISTINCT fd.filter_id ORDER BY CONCAT_WS(' &gt; ', fgd.name, fd.name) ASC SEPARATOR '_') AS filter";
 		}
 
 		if (in_array("category", $columns)) {
-			$sql .= ", GROUP_CONCAT(DISTINCT cat.name ORDER BY cat.name ASC SEPARATOR '<br/>') AS category_text, GROUP_CONCAT(DISTINCT cat.category_id ORDER BY cat.name ASC SEPARATOR '_') AS category";
+			$select_sql .= ", GROUP_CONCAT(DISTINCT cat.name ORDER BY cat.name ASC SEPARATOR '<br/>') AS category_text, GROUP_CONCAT(DISTINCT cat.category_id ORDER BY cat.name ASC SEPARATOR '_') AS category";
 		}
 
 		if (in_array("store", $columns)) {
-			$sql .= ", GROUP_CONCAT(DISTINCT IF(p2s.store_id = 0, '" . $this->db->escape($this->config->get('config_name')) . "', s.name) SEPARATOR '<br/>') AS store_text, GROUP_CONCAT(DISTINCT p2s.store_id SEPARATOR '_') AS store";
+			$select_sql .= ", GROUP_CONCAT(DISTINCT IF(p2s.store_id = 0, '" . $this->db->escape($this->config->get('config_name')) . "', s.name) SEPARATOR '<br/>') AS store_text, GROUP_CONCAT(DISTINCT p2s.store_id SEPARATOR '_') AS store";
 		}
 
 		if (in_array("view_in_store", $columns)) {
-			$sql .= ", GROUP_CONCAT(DISTINCT p2s.store_id SEPARATOR '_') AS store_ids";
+			$select_sql .= ", GROUP_CONCAT(DISTINCT p2s.store_id SEPARATOR '_') AS store_ids";
 		}
 
 		// Actions
 		if ((int)$this->config->get('module_product_quick_edit_highlight_actions')) {
 			if (in_array("attributes", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_attribute WHERE product_id = p.product_id LIMIT 1) AS attributes_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_attribute WHERE product_id = p.product_id LIMIT 1) AS attributes_exist";
 			}
 
 			if (in_array("discounts", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_discount WHERE product_id = p.product_id LIMIT 1) AS discounts_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_discount WHERE product_id = p.product_id LIMIT 1) AS discounts_exist";
 			}
 
 			if (in_array("images", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_image WHERE product_id = p.product_id LIMIT 1) AS images_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_image WHERE product_id = p.product_id LIMIT 1) AS images_exist";
 			}
 
 			if (in_array("filters", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_filter WHERE product_id = p.product_id LIMIT 1) AS filters_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_filter WHERE product_id = p.product_id LIMIT 1) AS filters_exist";
 			}
 
 			if (in_array("options", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_option WHERE product_id = p.product_id LIMIT 1) AS options_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_option WHERE product_id = p.product_id LIMIT 1) AS options_exist";
 			}
 
 			if (in_array("recurrings", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_recurring WHERE product_id = p.product_id LIMIT 1) AS recurrings_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_recurring WHERE product_id = p.product_id LIMIT 1) AS recurrings_exist";
 			}
 
 			if (in_array("related", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_related WHERE product_id = p.product_id LIMIT 1) AS related_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_related WHERE product_id = p.product_id LIMIT 1) AS related_exist";
 			}
 
 			if (in_array("specials", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_special WHERE product_id = p.product_id LIMIT 1) AS specials_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_special WHERE product_id = p.product_id LIMIT 1) AS specials_exist";
 			}
 
 			if (in_array("descriptions", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_description WHERE product_id = p.product_id LIMIT 1) AS descriptions_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "product_description WHERE product_id = p.product_id LIMIT 1) AS descriptions_exist";
 			}
 
 			if (in_array("seo_urls", $actions)) {
-				$sql .= ", (SELECT 1 FROM " . DB_PREFIX . "seo_url WHERE query = CONCAT('product_id=', p.product_id) LIMIT 1) AS seo_urls_exist";
+				$select_sql .= ", (SELECT 1 FROM " . DB_PREFIX . "seo_url WHERE query = CONCAT('product_id=', p.product_id) LIMIT 1) AS seo_urls_exist";
 			}
 		}
 
-		$sql .= " FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+		$from_sql = " FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
 
 		if (!empty($data['filter']['special_price']) && in_array($data['filter']['special_price'], array("active", "expired", "future", "na"))) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_special ps ON (ps.product_id = p.product_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_special ps ON (ps.product_id = p.product_id)";
 		}
 
 		if (in_array("manufacturer", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "manufacturer m ON (m.manufacturer_id = p.manufacturer_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "manufacturer m ON (m.manufacturer_id = p.manufacturer_id)";
 		}
 
 		if (in_array("category", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON (p.product_id = p2c.product_id) LEFT JOIN (SELECT cp.category_id AS category_id, GROUP_CONCAT(cd1.name ORDER BY cp.level SEPARATOR ' &gt; ') AS name FROM " . DB_PREFIX . "category_path cp LEFT JOIN " . DB_PREFIX . "category c ON (cp.path_id = c.category_id) LEFT JOIN " . DB_PREFIX . "category_description cd1 ON (c.category_id = cd1.category_id) LEFT JOIN " . DB_PREFIX . "category_description cd2 ON (cp.category_id = cd2.category_id) WHERE cd1.language_id = '" . (int)$this->config->get('config_language_id') . "' AND cd2.language_id = '" . (int)$this->config->get('config_language_id') . "' GROUP BY cp.category_id ORDER BY name) AS cat ON (p2c.category_id = cat.category_id)";
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_category p2c2 ON (p.product_id = p2c2.product_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON (p.product_id = p2c.product_id) LEFT JOIN (SELECT cp.category_id AS category_id, GROUP_CONCAT(cd1.name ORDER BY cp.level SEPARATOR ' &gt; ') AS name FROM " . DB_PREFIX . "category_path cp LEFT JOIN " . DB_PREFIX . "category c ON (cp.path_id = c.category_id) LEFT JOIN " . DB_PREFIX . "category_description cd1 ON (c.category_id = cd1.category_id) LEFT JOIN " . DB_PREFIX . "category_description cd2 ON (cp.category_id = cd2.category_id) WHERE cd1.language_id = '" . (int)$this->config->get('config_language_id') . "' AND cd2.language_id = '" . (int)$this->config->get('config_language_id') . "' GROUP BY cp.category_id ORDER BY name) AS cat ON (p2c.category_id = cat.category_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_category p2c2 ON (p.product_id = p2c2.product_id)";
 		}
 
 		if (in_array("filter", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_filter p2f ON (p.product_id = p2f.product_id) LEFT JOIN " . DB_PREFIX . "filter f ON (f.filter_id = p2f.filter_id) LEFT JOIN " . DB_PREFIX . "filter_description fd ON (fd.filter_id = p2f.filter_id AND fd.language_id = '" . (int)$this->config->get('config_language_id') . "') LEFT JOIN " . DB_PREFIX . "filter_group_description fgd ON (f.filter_group_id = fgd.filter_group_id AND fgd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_filter p2f2 ON (p.product_id = p2f2.product_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_filter p2f ON (p.product_id = p2f.product_id) LEFT JOIN " . DB_PREFIX . "filter f ON (f.filter_id = p2f.filter_id) LEFT JOIN " . DB_PREFIX . "filter_description fd ON (fd.filter_id = p2f.filter_id AND fd.language_id = '" . (int)$this->config->get('config_language_id') . "') LEFT JOIN " . DB_PREFIX . "filter_group_description fgd ON (f.filter_group_id = fgd.filter_group_id AND fgd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_filter p2f2 ON (p.product_id = p2f2.product_id)";
 		}
 
 		if (in_array("download", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_download p2d ON (p.product_id = p2d.product_id) LEFT JOIN " . DB_PREFIX . "download_description dd ON (dd.download_id = p2d.download_id AND dd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_download p2d2 ON (p.product_id = p2d2.product_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_download p2d ON (p.product_id = p2d.product_id) LEFT JOIN " . DB_PREFIX . "download_description dd ON (dd.download_id = p2d.download_id AND dd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_download p2d2 ON (p.product_id = p2d2.product_id)";
 		}
 
 		if (in_array("store", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) LEFT JOIN " . DB_PREFIX . "store s ON (s.store_id = p2s.store_id)";
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s2 ON (p.product_id = p2s2.product_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) LEFT JOIN " . DB_PREFIX . "store s ON (s.store_id = p2s.store_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s2 ON (p.product_id = p2s2.product_id)";
 		} else if (in_array("view_in_store", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)";
 		}
 
 		if (in_array("tax_class", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "tax_class tc ON (tc.tax_class_id = p.tax_class_id)";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "tax_class tc ON (tc.tax_class_id = p.tax_class_id)";
 		}
 
 		if (in_array("stock_status", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "stock_status ss ON (ss.stock_status_id = p.stock_status_id AND ss.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "stock_status ss ON (ss.stock_status_id = p.stock_status_id AND ss.language_id = '" . (int)$this->config->get('config_language_id') . "')";
 		}
 
 		if (in_array("length_class", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "length_class lc ON (lc.length_class_id = p.length_class_id) LEFT JOIN " . DB_PREFIX . "length_class_description lcd ON (lcd.length_class_id = lc.length_class_id AND lcd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "length_class lc ON (lc.length_class_id = p.length_class_id) LEFT JOIN " . DB_PREFIX . "length_class_description lcd ON (lcd.length_class_id = lc.length_class_id AND lcd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
 		}
 
 		if (in_array("weight_class", $columns)) {
-			$sql .= " LEFT JOIN " . DB_PREFIX . "weight_class wc ON (wc.weight_class_id = p.weight_class_id) LEFT JOIN " . DB_PREFIX . "weight_class_description wcd ON (wcd.weight_class_id = wc.weight_class_id AND wcd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
+			$from_sql .= " LEFT JOIN " . DB_PREFIX . "weight_class wc ON (wc.weight_class_id = p.weight_class_id) LEFT JOIN " . DB_PREFIX . "weight_class_description wcd ON (wcd.weight_class_id = wc.weight_class_id AND wcd.language_id = '" . (int)$this->config->get('config_language_id') . "')";
 		}
 
 		$filters = array('AND' => array(), 'OR' => array());
@@ -653,23 +658,25 @@ class ModelExtensionModuleProductQuickEdit extends Model {
 			}
 		}
 
+		$where_sql = '';
+
 		if ($filters['AND'] || $filters['OR']) {
-			$sql .= " WHERE";
+			$where_sql .= " WHERE";
 
 			if ($filters['OR']) {
-				$sql .= " (" . implode(" OR ", $filters['OR']) . ")";
+				$where_sql .= " (" . implode(" OR ", $filters['OR']) . ")";
 			}
 
 			if ($filters['AND']) {
 				if ($filters['OR']) {
-					$sql .= " AND";
+					$where_sql .= " AND";
 				}
 
-				$sql .= " " . implode(" AND ", $filters['AND']);
+				$where_sql .= " " . implode(" AND ", $filters['AND']);
 			}
 		}
 
-		$sql .= " GROUP BY p.product_id";
+		$group_sql = " GROUP BY p.product_id";
 
 		$filters = array('AND' => array(), 'OR' => array());
 
@@ -730,21 +737,26 @@ class ModelExtensionModuleProductQuickEdit extends Model {
 			}
 		}
 
+		$having_sql = '';
+
 		if ($filters['AND'] || $filters['OR']) {
-			$sql .= " HAVING";
+			$having_sql .= " HAVING";
 
 			if ($filters['OR']) {
-				$sql .= " (" . implode(" OR ", $filters['OR']) . ")";
+				$having_sql .= " (" . implode(" OR ", $filters['OR']) . ")";
 			}
 
 			if ($filters['AND']) {
 				if ($filters['OR']) {
-					$sql .= " AND";
+					$having_sql .= " AND";
 				}
 
-				$sql .= " " . implode(" AND ", $filters['AND']);
+				$having_sql .= " " . implode(" AND ", $filters['AND']);
 			}
 		}
+
+		$sql = $select_sql . $from_sql . $where_sql . $group_sql . $having_sql;
+		$count_sql = $count_select_sql . $from_sql . $where_sql . $group_sql . $having_sql;
 
 		$sort = array();
 		foreach ($data['sort'] as $idx => $value) {
@@ -771,6 +783,7 @@ class ModelExtensionModuleProductQuickEdit extends Model {
 		}
 
 		$sql_hash = md5($sql);
+		$count_hash = md5($count_sql);
 
 		if ((int)$this->config->get('module_product_quick_edit_server_side_caching')) {
 			$product_data = $this->cache->get('pqe.products.data.' . $sql_hash);
@@ -782,8 +795,26 @@ class ModelExtensionModuleProductQuickEdit extends Model {
 		if ($product_data === false || is_null($product_data)) {
 			$query = $this->db->query($sql);
 
-			$count = $this->db->query("SELECT FOUND_ROWS() AS count");
-			$this->productCount = ($count->num_rows) ? (int)$count->row['count'] : 0;
+			if (empty($data['search']) && empty($data['filter'])) {
+				$this->productCount = $this->getTotalProducts();
+			} else {
+				$count = false;
+
+				if ((int)$this->config->get('module_product_quick_edit_server_side_caching')) {
+					$count = $this->cache->get('pqe.products.count.' . $count_hash);
+				}
+
+				if ($count === false || is_null($count)) {
+					$count_query = $this->db->query("SELECT COUNT(*) AS count FROM (" . $count_sql . ") AS pqe_product_count");
+					$count = ($count_query->num_rows) ? (int)$count_query->row['count'] : 0;
+
+					if ((int)$this->config->get('module_product_quick_edit_server_side_caching')) {
+						$this->cache->set('pqe.products.count.' . $count_hash, $count);
+					}
+				}
+
+				$this->productCount = (int)$count;
+			}
 
 			$products = array();
 

@@ -43,6 +43,7 @@ $_['text_order']                = 'Orders';
 $_['text_order_status']         = 'Order Statuses';
 $_['text_online']               = 'Who\'s Online';
 $_['text_product']              = 'Products';
+$_['text_excetra_import']        = 'Excetra B2B import';
 $_['text_reports']              = 'Reports';
 $_['text_review']               = 'Reviews';
 $_['text_return']               = 'Returns';
