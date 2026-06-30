@@ -268,7 +268,21 @@ class ControllerProductProduct extends Controller {
             $data['reward'] = $product_info['reward'];
             $data['points'] = $product_info['points'];
             $data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
-            $data['extended_warranty'] = in_array(utf8_strtolower(trim($product_info['manufacturer'])), array('candy', 'beko', 'whirlpool', 'electrolux', 'aeg'));
+            $extended_warranty_links = array(
+                'amica'      => 'https://amica-group.hr/5yearwarranty/#/terms-and-conditions',
+                'candy'      => 'https://www.candy-home.com/hr_HR/garancija-candy-hr/',
+                'electrolux' => 'https://www.electrolux.hr/support/warranties/',
+                'aeg'        => 'https://www.aeg.hr/5-godina-garancije-2026/',
+                'beko'       => 'https://www.beko.com/hr-hr/podr%C5%A1ka/jamstva_za_beko_proizvode',
+                'whirlpool'  => 'https://www.whirlpool.hr/podrska/jamstvena-stranica',
+                'haier'      => 'https://www.haier-europe.com/hr_HR/garancija-haier-hr/',
+                'gorenje'    => 'https://hr.gorenje.com/podrska/garancija',
+                'gorenje plus'  => 'https://hr.gorenje.com/podrska/garancija',
+                'hisense'    => 'https://cc.hisense.com/hr/garancija'
+            );
+            $manufacturer_key = utf8_strtolower(trim($product_info['manufacturer']));
+            $data['extended_warranty_url'] = isset($extended_warranty_links[$manufacturer_key]) ? $extended_warranty_links[$manufacturer_key] : '';
+            $data['extended_warranty'] = (bool)$data['extended_warranty_url'];
             $data['whatsapp_availability_url'] = 'https://wa.me/385915970215?text=' . rawurlencode('Pozdrav, zanima me dostupnost artikla: ' . $product_info['name'] . ' - ' . html_entity_decode($this->url->link('product/product', 'product_id=' . (int)$this->request->get['product_id'], true), ENT_QUOTES, 'UTF-8'));
 
 

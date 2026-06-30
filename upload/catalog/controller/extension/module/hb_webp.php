@@ -30,6 +30,12 @@ class ControllerExtensionModuleHbWebp extends Controller {
 					continue;
 				}
 
+				if (!$this->model_extension_module_hb_webp->isActiveProductCacheImage($webp_source)) {
+					$delete_ids[] = $id;
+					$skipped++;
+					continue;
+				}
+
 				list($width_orig, $height_orig, $image_type) = @getimagesize($webp_source);
 
 				if (in_array($image_type, array(IMAGETYPE_PNG, IMAGETYPE_JPEG))) {

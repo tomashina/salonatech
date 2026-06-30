@@ -1,5 +1,7 @@
 <?php
 class ModelExtensionModuleHbWebp extends Model {
+    private $active_product_images = null;
+
     public function getUncompressedImages(){
         $limit = (int)$this->config->get('hb_webp_cron_limit');
 
@@ -21,7 +23,7 @@ class ModelExtensionModuleHbWebp extends Model {
 
 		if(is_dir($image_cache_folder)) {
             $total = $this->storePendingImages($image_cache_folder);
-			$this->addlog($total.' uncompressed WebP image paths logged to database!');
+			$this->addlog($total.' active product image paths logged to database!');
 		}else{
             $this->addlog('No Image Cache folder found!');
 		}
@@ -131,9 +133,71 @@ class ModelExtensionModuleHbWebp extends Model {
             return false;
         }
 
+        if (!$this->isActiveProductCacheImage($path)) {
+            return false;
+        }
+
         $webp_destination = $this->getWebpDestinationPath($path);
 
         return !is_file($webp_destination) || filemtime($path) > filemtime($webp_destination);
+    }
+
+    public function isActiveProductCacheImage($path) {
+        $image = $this->getOriginalImageFromCachePath($path);
+
+        if ($image === '') {
+            return false;
+        }
+
+        $active_product_images = $this->getActiveProductImages();
+
+        return isset($active_product_images[$image]);
+    }
+
+    private function getOriginalImageFromCachePath($path) {
+        $path = str_replace('\\', '/', $path);
+        $image_cache_folder = str_replace('\\', '/', DIR_IMAGE.'cache/');
+
+        if (strpos($path, $image_cache_folder) !== 0) {
+            return '';
+        }
+
+        $image = substr($path, strlen($image_cache_folder));
+        $extension = pathinfo($image, PATHINFO_EXTENSION);
+
+        if ($extension === '') {
+            return '';
+        }
+
+        return preg_replace('/-\d+x\d+\.'.preg_quote($extension, '/').'$/i', '.'.$extension, $image);
+    }
+
+    private function getActiveProductImages() {
+        if ($this->active_product_images !== null) {
+            return $this->active_product_images;
+        }
+
+        $store_id = (int)$this->config->get('config_store_id');
+        $this->active_product_images = array();
+
+		$sql = "SELECT DISTINCT `image` FROM (";
+		$sql .= "SELECT p.`image` AS `image` FROM `".DB_PREFIX."product` p INNER JOIN `".DB_PREFIX."product_to_store` p2s ON (p.`product_id` = p2s.`product_id`) WHERE p.`status` = '1' AND p.`date_available` <= NOW() AND p2s.`store_id` = '".$store_id."' AND p.`image` <> ''";
+		$sql .= " UNION ";
+		$sql .= "SELECT pi.`image` AS `image` FROM `".DB_PREFIX."product_image` pi INNER JOIN `".DB_PREFIX."product` p ON (p.`product_id` = pi.`product_id`) INNER JOIN `".DB_PREFIX."product_to_store` p2s ON (p.`product_id` = p2s.`product_id`) WHERE p.`status` = '1' AND p.`date_available` <= NOW() AND p2s.`store_id` = '".$store_id."' AND pi.`image` <> ''";
+		$sql .= ") active_product_images";
+
+		$query = $this->db->query($sql);
+
+		foreach ($query->rows as $row) {
+			$image = str_replace('\\', '/', trim($row['image']));
+			$image = ltrim($image, '/');
+
+			if ($image !== '') {
+				$this->active_product_images[$image] = true;
+			}
+		}
+
+        return $this->active_product_images;
     }
 
     private function isCompressibleCacheImage($path) {

@@ -1,4 +1,4 @@
-{{ header }}{{ column_left }} 
+{{ header }}{{ column_left }}
 <!--Main Content block start-->
 
 <div id="content">
@@ -13,9 +13,9 @@
 	  </div>
       <h1>{{ heading_title }}</h1>
       <ul class="breadcrumb">
-        {% for breadcrumb in breadcrumbs %} 
+        {% for breadcrumb in breadcrumbs %}
         <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
-        {% endfor %} 
+        {% endfor %}
       </ul>
     </div>
   </div>
@@ -23,19 +23,19 @@
   <!--Container 1 start -->
   <div class="container-fluid">
     <!--Start - Error / Success Message if any -->
-    {% if (error_warning) %} 
-    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }} 
+    {% if (error_warning) %}
+    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
       <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
-    {% endif %} 
-    {% if (success) %} 
-    <div class="alert alert-success"><i class="fa fa-check-circle"></i> {{ success }} 
+    {% endif %}
+    {% if (success) %}
+    <div class="alert alert-success"><i class="fa fa-check-circle"></i> {{ success }}
       <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
-    {% endif %} 
+    {% endif %}
     <!--End - Error / Success Message if any -->
 	<div id="msgoutput"></div>
-	
+
     <!--Panel Content Start-->
     <div class="panel panel-default">
       <div class="panel-heading">
@@ -55,7 +55,7 @@
 			  	<div class="tab-pane active" id="tab-dashboard">
 					<div id="dashboard-block"></div>
 				</div>
-				
+
 				<!--FILES-->
 				<div class="tab-pane" id="tab-files">
 					<div id="records-block"></div>
@@ -84,7 +84,7 @@
 							<div class="well">{{ hb_webp_cron }}</div>
 						</div>
 					</div>
-				</div>	
+				</div>
 
 				<div id="tab-logs" class="tab-pane">
 					<div id="logs-block"></div>
@@ -96,7 +96,7 @@
 
 			</div><!--tab-content block end-->
         </form>
-		
+
       </div>
     </div>
     <!--Panel Content End-->
@@ -141,7 +141,7 @@ $('#records-block').delegate('.pagination a', 'click', function(e) {
 function getcachedimages(){
 	$('#msgoutput').html('<div class="text-center"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i></div>');
 	$.ajax({
-		url: 'index.php?route={{ base_route }}/hb_webp/getcachedimages&user_token={{ user_token }}',
+		url: 'index.php?route={{ base_route }}/hb_webp/getcachedimages&user_token={{ user_token }}&store_id={{ store_id }}',
 		dataType: 'json',
 		success: function(json) {
 			if (json['success']) {
@@ -169,7 +169,7 @@ function deleteCache(){
 function generate(){
 	$('#msgoutput').html('<div class="text-center"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i></div>');
 	$.ajax({
-		  url: 'index.php?route={{ base_route }}/hb_webp/generate&user_token={{ user_token }}',
+		  url: 'index.php?route={{ base_route }}/hb_webp/generate&user_token={{ user_token }}&store_id={{ store_id }}',
 		  dataType: 'json',
 		  success: function(json) {
 				if (json['success']) {
@@ -200,11 +200,11 @@ function startprocess(url) {
 					google.charts.setOnLoadCallback(drawChart(json['percentage']));
 				}
 			}
-			
+
 			if (json['next']) {
 				startprocess(json['next']);
 			}
-			
+
 			if (json['over']) {
 				loadBlock('dashboard');
 				$('#button-generate').button('reset');

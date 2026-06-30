@@ -5322,18 +5322,22 @@ a.button-circle {
     color:#ffffff;
 }
 #gallery .main-image .badge.extended_warranty_badge {
-    top:15px;
-    right:25px;
+    top:14px;
+    right:22px;
     left:auto;
-    width:130px;
-    height:42px;
-    background:#d71920;
-    color:#ffffff;
+    width:100px;
+    height:100px;
+    display:block;
+    min-width:0;
+    padding:0;
+    line-height:1;
+    background:transparent;
+    color:inherit;
 }
-#gallery .main-image .badge.extended_warranty_badge i {
-    padding:0 8px;
-    font-size:13px;
-    line-height:16px;
+#gallery .main-image .badge.extended_warranty_badge img {
+    display:block;
+    width:100%;
+    height:auto;
 }
 .single-product .image .icons-wrapper {
     position:absolute;

@@ -5,22 +5,12 @@ class ModelToolImage extends Model {
 			return;
 		}
 
-		if ($this->request->server['HTTPS']) {
-			$image_url = $this->config->get('config_ssl') . 'image/';
-		} else {
-			$image_url = $this->config->get('config_url') . 'image/';
-		}
-
 		$extension = pathinfo($filename, PATHINFO_EXTENSION);
 
 		$image_old = $filename;
 		$image_new = 'cache/' . utf8_substr($filename, 0, utf8_strrpos($filename, '.')) . '-' . (int)$width . 'x' . (int)$height . '.' . $extension;
 
 		if (!is_file(DIR_IMAGE . $image_new) || (filemtime(DIR_IMAGE . $image_old) > filemtime(DIR_IMAGE . $image_new))) {
-			if (!extension_loaded('gd')) {
-				return $image_url . str_replace(' ', '%20', $image_old);
-			}
-
 			list($width_orig, $height_orig, $image_type) = getimagesize(DIR_IMAGE . $image_old);
 				 
 			if (!in_array($image_type, array(IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF))) { 
@@ -50,6 +40,10 @@ class ModelToolImage extends Model {
 		
 		$image_new = str_replace(' ', '%20', $image_new);  // fix bug when attach image on email (gmail.com). it is automatic changing space " " to +
 		
-		return $image_url . $image_new;
+		if ($this->request->server['HTTPS']) {
+			return $this->config->get('config_ssl') . 'image/' . $image_new;
+		} else {
+			return $this->config->get('config_url') . 'image/' . $image_new;
+		}
 	}
 }

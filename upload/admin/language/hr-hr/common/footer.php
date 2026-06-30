@@ -1,4 +1,4 @@
 <?php
 // Text
-$_['text_footer']  = 'Dijana Tošev &copy; ' . date('Y') . '. Sva prava pridržana.';
-$_['text_version'] = 'Verzija %s';
+$_['text_footer']  = 'Salonatech &copy; ' . date('Y') . '. Sva prava pridržana.';
+$_['text_version'] = '';

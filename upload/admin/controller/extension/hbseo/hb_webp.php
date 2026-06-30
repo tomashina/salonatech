@@ -5,6 +5,7 @@ use WebPConvert\WebPConvert;
 class ControllerExtensionHbseoHbWebp extends Controller {
 	protected $registry;
 	private $error = array();
+	private $active_product_images = null;
 
 	public function __construct($registry) {
 		$this->registry = $registry;
@@ -123,6 +124,7 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 	public function dashboard() {
 		$data[$this->hb_token_name] = $this->session->data[$this->hb_token_name];
 		$data['base_route'] = $this->hb_extension_route;
+		$data['store_id'] = isset($this->request->get['store_id']) ? (int)$this->request->get['store_id'] : 0;
 
 		$data['files'] = array();
 		$data['files_limited'] = false;
@@ -140,6 +142,7 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 			$data['files_limited'] = $stats['files_limited'];
 			$data['uncompress_count'] = $stats['uncompress_count'];
 			$data['oc_cache_count'] = $stats['oc_cache_count'];
+			$data['active_product_cache_count'] = $stats['compressible_count'];
 			$data['compress_count'] = max(0, $stats['compressible_count'] - $data['uncompress_count']);
 
 			if ($stats['compressible_count'] <> 0) {
@@ -209,7 +212,7 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 		if(is_dir($image_cache_folder)) {
 			$total = $this->storePendingImages($image_cache_folder);
 
-			$json['success'] = $total.' uncompressed WebP image paths logged to database!';
+			$json['success'] = $total.' active product image paths logged to database!';
 		}else{
 			$json['success'] = 'No Image Cache folder found!';
 		}
@@ -237,6 +240,17 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 			$prev_total = 0;
 		}
 
+		$store_id = isset($this->request->get['store_id']) ? (int)$this->request->get['store_id'] : 0;
+
+		if ($prev_total == 0) {
+			$image_cache_folder = DIR_IMAGE.'cache/';
+			$this->model_extension_hbseo_hb_webp->deleteall();
+
+			if (is_dir($image_cache_folder)) {
+				$oc_count = $this->storePendingImages($image_cache_folder);
+			}
+		}
+
 		$limit_count = $this->getBatchLimit();
 
 		$total 		= $this->model_extension_hbseo_hb_webp->getTotalrecords();
@@ -254,6 +268,12 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 				$webp_source = $path['path'];
 
 				if (!is_file($webp_source)) {
+					$delete_ids[] = $id;
+					$skipped++;
+					continue;
+				}
+
+				if (!$this->isActiveProductCacheImage($webp_source)) {
 					$delete_ids[] = $id;
 					$skipped++;
 					continue;
@@ -303,7 +323,7 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 			if ($remaining > 0 && $remaining == $total && $remaining == $prev_total) {
 				$json['error'] = 'Operation Stopped. Refer to your error log.';
 			} elseif ($remaining > 0) {
-				$json['next'] 		= str_replace('&amp;', '&', $this->url->link($this->hb_extension_route.'/hb_webp/generate', $this->hb_token_name.'=' . $this->session->data[$this->hb_token_name].'&prev_total='.$remaining.'&oc_count='.$oc_count, true));
+				$json['next'] 		= str_replace('&amp;', '&', $this->url->link($this->hb_extension_route.'/hb_webp/generate', $this->hb_token_name.'=' . $this->session->data[$this->hb_token_name].'&store_id='.$store_id.'&prev_total='.$remaining.'&oc_count='.$oc_count, true));
 				$json['success'] 	= '<i class="fa fa-spinner fa-pulse fa-fw"></i> '.$message;
 
 				if ($oc_count > 0) {
@@ -372,7 +392,7 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 				$stats['oc_cache_count']++;
 			}
 
-			if ($this->isCompressibleCacheImage($path)) {
+			if ($this->isCompressibleCacheImage($path) && $this->isActiveProductCacheImage($path)) {
 				$stats['compressible_count']++;
 			}
 
@@ -446,9 +466,71 @@ class ControllerExtensionHbseoHbWebp extends Controller {
 			return false;
 		}
 
+		if (!$this->isActiveProductCacheImage($path)) {
+			return false;
+		}
+
 		$webp_destination = $this->getWebpDestinationPath($path);
 
 		return !is_file($webp_destination) || filemtime($path) > filemtime($webp_destination);
+	}
+
+	private function isActiveProductCacheImage($path) {
+		$image = $this->getOriginalImageFromCachePath($path);
+
+		if ($image === '') {
+			return false;
+		}
+
+		$active_product_images = $this->getActiveProductImages();
+
+		return isset($active_product_images[$image]);
+	}
+
+	private function getOriginalImageFromCachePath($path) {
+		$path = str_replace('\\', '/', $path);
+		$image_cache_folder = str_replace('\\', '/', DIR_IMAGE.'cache/');
+
+		if (strpos($path, $image_cache_folder) !== 0) {
+			return '';
+		}
+
+		$image = substr($path, strlen($image_cache_folder));
+		$extension = pathinfo($image, PATHINFO_EXTENSION);
+
+		if ($extension === '') {
+			return '';
+		}
+
+		return preg_replace('/-\d+x\d+\.'.preg_quote($extension, '/').'$/i', '.'.$extension, $image);
+	}
+
+	private function getActiveProductImages() {
+		if ($this->active_product_images !== null) {
+			return $this->active_product_images;
+		}
+
+		$store_id = isset($this->request->get['store_id']) ? (int)$this->request->get['store_id'] : 0;
+		$this->active_product_images = array();
+
+		$sql = "SELECT DISTINCT `image` FROM (";
+		$sql .= "SELECT p.`image` AS `image` FROM `".DB_PREFIX."product` p INNER JOIN `".DB_PREFIX."product_to_store` p2s ON (p.`product_id` = p2s.`product_id`) WHERE p.`status` = '1' AND p.`date_available` <= NOW() AND p2s.`store_id` = '".$store_id."' AND p.`image` <> ''";
+		$sql .= " UNION ";
+		$sql .= "SELECT pi.`image` AS `image` FROM `".DB_PREFIX."product_image` pi INNER JOIN `".DB_PREFIX."product` p ON (p.`product_id` = pi.`product_id`) INNER JOIN `".DB_PREFIX."product_to_store` p2s ON (p.`product_id` = p2s.`product_id`) WHERE p.`status` = '1' AND p.`date_available` <= NOW() AND p2s.`store_id` = '".$store_id."' AND pi.`image` <> ''";
+		$sql .= ") active_product_images";
+
+		$query = $this->db->query($sql);
+
+		foreach ($query->rows as $row) {
+			$image = str_replace('\\', '/', trim($row['image']));
+			$image = ltrim($image, '/');
+
+			if ($image !== '') {
+				$this->active_product_images[$image] = true;
+			}
+		}
+
+		return $this->active_product_images;
 	}
 
 	private function getWebpDestinationPath($webp_source) {
