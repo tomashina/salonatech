@@ -38,11 +38,7 @@ class ModelExtensionModuleTfFilter extends model {
          * @return Array
          */
         public function getSubCategories($product_table, $category_id, $data = array()){
-                $sql = 'SELECT c.category_id, cd.name, c.image, c.sort_order';
-                
-                if(!empty($data['field_total'])){
-                    $sql .= ', COUNT(DISTINCT p.product_id) total';
-                }
+                $sql = 'SELECT c.category_id, cd.name, c.image, c.sort_order, COUNT(DISTINCT p.product_id) total';
                 
                 $sql .= " FROM " . DB_PREFIX . "category c LEFT JOIN " . DB_PREFIX . "category_description cd ON (c.category_id = cd.category_id AND cd.language_id = '" . (int)$this->config->get('config_language_id') . "') LEFT JOIN " . DB_PREFIX . "category_path cp ON (c.category_id = cp.path_id) LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON (p2c.category_id = cp.category_id) LEFT JOIN $product_table p ON (p.product_id = p2c.product_id)";
                 
@@ -100,7 +96,7 @@ class ModelExtensionModuleTfFilter extends model {
                     $sql .= " AND pf.filter_id IN (" . implode(',', array_map('intval', $filters)) . ")";
                 }
                 
-                $sql .= " GROUP BY c.category_id";
+                $sql .= " GROUP BY c.category_id HAVING total > 0";
                 
                 /*if(!empty($data['field_total'])){
                     $sql .= " ORDER BY total DESC, c.sort_order ASC";

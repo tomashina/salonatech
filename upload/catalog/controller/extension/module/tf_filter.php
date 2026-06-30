@@ -81,7 +81,7 @@ class ControllerExtensionModuleTfFilter extends Controller
         }
 
         // Sub category
-        if ($this->info['filter']['sub_category']['status'] && $this->category_id && $this->sub_category) {
+        if ($this->info['filter']['sub_category']['status'] && $this->sub_category && ($this->category_id || !empty($this->request->get['manufacturer_id']))) {
             $data['filters'][] = $this->getSubCategoryFilter();
         }
 
@@ -267,6 +267,7 @@ class ControllerExtensionModuleTfFilter extends Controller
             'collapse' => $this->info['filter']['sub_category']['collapse'],
             'input_type' => $this->info['filter']['sub_category']['input_type'],
             'list_type' => $this->info['filter']['sub_category']['list_type'],
+            'link_type' => ($this->route === 'product/category' && $this->category_id) ? 'category' : 'filter',
             'values' => array(),
         );
 
@@ -343,6 +344,7 @@ class ControllerExtensionModuleTfFilter extends Controller
                 'category_id' => $sub_category['category_id'],
                 'name' => $sub_category['name'],
                 'image' => $image,
+                'href' => $this->getSubCategoryHref($sub_category['category_id']),
                 'total' => $total,
                 'selected' => in_array($sub_category['category_id'], $selected),
                 'status' => $status,
@@ -364,6 +366,21 @@ class ControllerExtensionModuleTfFilter extends Controller
         }
 
         return $data;
+    }
+
+    private function getSubCategoryHref($category_id)
+    {
+        if ($this->route !== 'product/category' || !$this->category_id) {
+            return '';
+        }
+
+        if (!empty($this->request->get['path'])) {
+            $path = $this->request->get['path'];
+        } else {
+            $path = $this->category_id;
+        }
+
+        return $this->url->link('product/category', 'path=' . $path . '_' . (int)$category_id);
     }
 
     /**

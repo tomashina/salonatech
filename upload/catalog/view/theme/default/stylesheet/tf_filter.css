@@ -147,6 +147,19 @@ html[dir="rtl"] .tf-filter-group-content .tf-product-total{
 	margin-bottom: 7px;
 }
 
+.tf-filter-value .tf-category-link {
+	color: inherit;
+	display: inline-flex;
+	align-items: center;
+	text-decoration: none;
+}
+
+.tf-filter-value .tf-category-link:hover,
+.tf-filter-value .tf-category-link:focus {
+	color: #dd1f1f;
+	text-decoration: none;
+}
+
 .tf-filter-value.both input, .tf-filter-value.image input, .tf-filter-value.both .checkmark, .tf-filter-value.image .checkmark {
 	display: none !important;
 }

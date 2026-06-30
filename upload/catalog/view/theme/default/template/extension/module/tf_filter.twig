@@ -36,7 +36,7 @@
         <div class="tf-filter-group {{ filter.type }} {{ (hide_zero_filter and not filter.status)?'hide' }} col-xs-{{ (12/column_xs)|round(0, 'ceil') }} col-sm-{{ (12/column_sm)|round(0, 'ceil') }} col-md-{{ (12/column_md)|round(0, 'ceil') }} col-lg-{{ (12/column_lg)|round(0, 'ceil') }}">
           <div class="tf-filter-group-header {{ filter['collapse']?'collapsed' }}" data-toggle="collapse" href="#tf-filter-panel-{{ module_class_id }}-{{ key }}">
             <span class="tf-filter-group-title">{{ text_sub_category }}</span>
-            {% if reset_group %}
+            {% if reset_group and filter['link_type'] != 'category' %}
               {% set total_selected = 0 %}
               {% for sub_category in filter['values'] %}{% if sub_category['selected'] %}{% set total_selected = total_selected + 1 %}{% endif %}{% endfor %}
               <a data-tf-reset="check" data-toggle="tooltip" title="{{ text_reset }}" class=" tf-filter-reset{{ not total_selected?' hide' }}"><i class="fa fa-times"></i></a>
@@ -50,21 +50,32 @@
             <div class="tf-filter-group-content {{ overflow }}">
               {% for sub_category in filter['values'] %}
                 <div class="form-check tf-filter-value {{ (hide_zero_filter and not sub_category.status)?'hide' }} custom-{{ filter['input_type'] }} {{ filter['list_type'] }}">
-                  <label class="form-check-label">
-                    {% if (sub_category['selected']) %}
-                      <input type="{{ filter['input_type'] }}" name="tf_fsc" value="{{ sub_category['category_id'] }}" class="form-check-input" checked>
-                    {% else %}
-                      <input type="{{ filter['input_type'] }}" name="tf_fsc" value="{{ sub_category['category_id'] }}" class="form-check-input" {{ not sub_category['status']?'disabled' }}>
-                    {% endif %}
-                    {% if (filter['list_type'] == 'image' or filter['list_type'] == 'both') %}
-                      <img src="{{ sub_category['image'] }}" title="{{ sub_category['name'] }}" alt="{{ sub_category['name'] }}" />
-                    {% else %}
-                      <span class="checkmark fa"></span>
-                    {% endif %}
-                    {% if (filter['list_type'] == 'text' or filter['list_type'] == 'both') %}
-                      {{ sub_category['name'] }}
-                    {% endif %}
-                  </label>
+                  {% if filter['link_type'] == 'category' %}
+                    <a href="{{ sub_category['href'] }}" class="form-check-label tf-category-link">
+                      {% if (filter['list_type'] == 'image' or filter['list_type'] == 'both') %}
+                        <img src="{{ sub_category['image'] }}" title="{{ sub_category['name'] }}" alt="{{ sub_category['name'] }}" />
+                      {% endif %}
+                      {% if (filter['list_type'] == 'text' or filter['list_type'] == 'both') %}
+                        {{ sub_category['name'] }}
+                      {% endif %}
+                    </a>
+                  {% else %}
+                    <label class="form-check-label">
+                      {% if (sub_category['selected']) %}
+                        <input type="{{ filter['input_type'] }}" name="tf_fsc" value="{{ sub_category['category_id'] }}" class="form-check-input" checked>
+                      {% else %}
+                        <input type="{{ filter['input_type'] }}" name="tf_fsc" value="{{ sub_category['category_id'] }}" class="form-check-input" {{ not sub_category['status']?'disabled' }}>
+                      {% endif %}
+                      {% if (filter['list_type'] == 'image' or filter['list_type'] == 'both') %}
+                        <img src="{{ sub_category['image'] }}" title="{{ sub_category['name'] }}" alt="{{ sub_category['name'] }}" />
+                      {% else %}
+                        <span class="checkmark fa"></span>
+                      {% endif %}
+                      {% if (filter['list_type'] == 'text' or filter['list_type'] == 'both') %}
+                        {{ sub_category['name'] }}
+                      {% endif %}
+                    </label>
+                  {% endif %}
                   {% if count_product and filter['list_type'] != 'image' %}
                     {% if (sub_category['total']) %}
                       <span class="label label-info tf-product-total">{{ sub_category['total'] }}</span>
