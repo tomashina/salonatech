@@ -1,0 +1,120 @@
+{{ header }}{{ column_left }}
+<div id="content" class="excetra-import">
+  <style>
+    .excetra-import .nav-tabs { margin-bottom: 16px; }
+    .excetra-import .panel-body { padding: 16px 20px; }
+    .excetra-import .excetra-toolbar { background: #fbfbfb; border: 1px solid #e5e5e5; padding: 14px 16px; margin-bottom: 14px; }
+    .excetra-import .table > tbody > tr > td { vertical-align: middle; }
+    .excetra-import .excetra-muted { color: #777; font-size: 12px; }
+  </style>
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <a href="{{ refresh }}" data-toggle="tooltip" title="{{ button_refresh }}" class="btn btn-info"><i class="fa fa-refresh"></i></a>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_categories }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+
+    <ul class="nav nav-tabs">
+      <li class="{% if active_tab == 'products' %}active{% endif %}"><a href="{{ products_page }}"><i class="fa fa-list"></i> {{ tab_products }}</a></li>
+      <li class="{% if active_tab == 'categories' %}active{% endif %}"><a href="{{ categories_page }}"><i class="fa fa-exchange"></i> {{ tab_mapping }}</a></li>
+      <li class="{% if active_tab == 'settings' %}active{% endif %}"><a href="{{ settings_page }}"><i class="fa fa-cog"></i> {{ tab_settings }}</a></li>
+    </ul>
+
+    <form action="{{ save }}" method="post" enctype="multipart/form-data" id="form-excetra-categories">
+      <input type="hidden" name="return_route" value="categories" />
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title"><i class="fa fa-exchange"></i> {{ text_mapping_settings }}</h3>
+        </div>
+        <div class="panel-body">
+          <div class="excetra-toolbar">
+            <div class="row">
+              <div class="col-sm-4">
+                <input type="text" id="input-map-filter" class="form-control" placeholder="{{ entry_search_categories }}" />
+              </div>
+              <div class="col-sm-4">
+                <select name="create_parent_category_id" class="form-control">
+                  <option value="0">{{ entry_create_parent_category }}: {{ text_none }}</option>
+                  {% for category in local_categories %}
+                  <option value="{{ category.category_id }}">{{ entry_create_parent_category }}: {{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-sm-4 text-right">
+                <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> {{ button_save_mapping }}</button>
+                <button type="submit" formaction="{{ create_categories }}" class="btn btn-success" onclick="return confirm('{{ text_confirm_create_categories }}');"><i class="fa fa-plus"></i> {{ button_create_categories }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover table-condensed" id="table-category-map">
+              <thead>
+                <tr>
+                  <td style="width: 1px;" class="text-center"><input type="checkbox" onclick="$('input[name*=\'supplier_category_ids\']').prop('checked', this.checked);" /></td>
+                  <td class="text-left">{{ column_supplier_category }}</td>
+                  <td class="text-left">{{ column_local_category }}</td>
+                </tr>
+              </thead>
+              <tbody>
+                {% if supplier_categories %}
+                {% for category in supplier_categories %}
+                {% set mapped_category_id = category_map[category.id] is defined ? category_map[category.id] : 0 %}
+                <tr data-filter="{{ category.name|lower }}">
+                  <td class="text-center"><input type="checkbox" name="supplier_category_ids[]" value="{{ category.id }}" /></td>
+                  <td class="text-left">
+                    <strong>{{ category.name }}</strong>
+                    <div class="excetra-muted">{{ category.id }}</div>
+                  </td>
+                  <td class="text-left">
+                    <select name="excetra_import_category_map[{{ category.map_key }}]" class="form-control">
+                      <option value="0">{{ text_not_mapped }}</option>
+                      {% for local_category in local_categories %}
+                      <option value="{{ local_category.category_id }}"{% if local_category.category_id == mapped_category_id %} selected="selected"{% endif %}>{{ local_category.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                  <td class="text-center" colspan="3">{{ text_no_results }}</td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<script type="text/javascript"><!--
+$('#input-map-filter').on('keyup', function() {
+	var value = $(this).val().toLowerCase();
+
+	$('#table-category-map tbody tr').each(function() {
+		var text = $(this).data('filter') || '';
+		$(this).toggle(text.indexOf(value) !== -1);
+	});
+});
+//--></script>
+{{ footer }}

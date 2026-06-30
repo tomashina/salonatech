@@ -1,0 +1,85 @@
+<?php
+$_['heading_title'] = 'Excetra B2B import';
+$_['heading_categories'] = 'Excetra B2B categories';
+$_['heading_settings'] = 'Excetra B2B settings';
+
+$_['text_home'] = 'Home';
+$_['text_filter'] = 'Filter';
+$_['text_products'] = 'Excetra products';
+$_['text_import_options'] = 'Import options';
+$_['text_mapping_settings'] = 'Category mapping and settings';
+$_['text_all_categories'] = 'All Excetra categories';
+$_['text_all_products'] = 'All products';
+$_['text_new_products'] = 'New only';
+$_['text_imported_products'] = 'Imported only';
+$_['text_select_category'] = 'Select local category';
+$_['text_none'] = 'None';
+$_['text_price_mpc'] = 'Retail price with VAT';
+$_['text_price_vpc'] = 'Wholesale price without VAT';
+$_['text_code'] = 'Code';
+$_['text_local'] = 'Local';
+$_['text_imported'] = 'Imported';
+$_['text_new'] = 'New';
+$_['text_not_mapped'] = 'Not mapped';
+$_['text_open_product'] = 'Open product';
+$_['text_no_results'] = 'No results.';
+$_['text_settings_success'] = 'Settings and category mapping saved.';
+$_['text_import_success'] = 'Import complete. Created: %s, updated: %s, skipped: %s.';
+$_['text_quantity_success'] = 'Quantities updated. Updated products: %s, not found in shop: %s.';
+$_['text_price_success'] = 'Prices updated from the selected Excetra price. Updated products: %s, not found in shop: %s, skipped without price: %s.';
+$_['text_update_success'] = 'Update complete. Updated products: %s, not found in shop: %s, skipped without price: %s.';
+$_['text_category_create_success'] = 'Category creation complete. Created: %s, mapped: %s.';
+$_['text_image_update_success'] = 'Excetra images updated. Total images: %s.';
+$_['text_confirm_import'] = 'Import selected products?';
+$_['text_confirm_update_quantities'] = 'Update quantities for already imported products from Excetra availability?';
+$_['text_confirm_update_prices'] = 'Update prices for already imported Excetra products from the selected price?';
+$_['text_confirm_update_products'] = 'Update prices and quantities for already imported Excetra products?';
+$_['text_confirm_create_categories'] = 'Create local categories for selected Excetra categories and map them?';
+$_['text_pagination'] = 'Showing %d to %d of %d (%d Pages)';
+
+$_['tab_products'] = 'Products';
+$_['tab_mapping'] = 'Categories';
+$_['tab_settings'] = 'Settings';
+
+$_['entry_search'] = 'Search';
+$_['entry_search_categories'] = 'Search Excetra categories';
+$_['entry_supplier_category'] = 'Excetra category';
+$_['entry_import_status'] = 'Import status';
+$_['entry_default_category'] = 'Default local category';
+$_['entry_create_parent_category'] = 'Parent category for creation';
+$_['entry_price_mode'] = 'Import price';
+$_['entry_margin'] = 'Margin (%)';
+$_['entry_tax_class'] = 'Tax class';
+$_['entry_use_category_map'] = 'Use Excetra category mapping when available';
+$_['entry_auto_create_category'] = 'Automatically create a local Excetra category when missing';
+$_['entry_update_existing_descriptions'] = 'Update descriptions for existing products';
+$_['entry_feed_url'] = 'Excetra XML feed';
+$_['entry_cron_token'] = 'Cron token';
+$_['help_cron_token'] = 'The cron URL updates Excetra prices and quantities by default. Add &action=prices or &action=quantities to update only one field.';
+
+$_['column_image'] = 'Image';
+$_['column_product'] = 'Product';
+$_['column_supplier_category'] = 'Excetra category';
+$_['column_local_category'] = 'Local category';
+$_['column_quantity'] = 'Quantity';
+$_['column_price'] = 'Price';
+$_['column_status'] = 'Status';
+
+$_['button_filter'] = 'Filter';
+$_['button_refresh'] = 'Refresh Excetra feed';
+$_['button_cancel'] = 'Back';
+$_['button_import_selected'] = 'Import selected';
+$_['button_save_mapping'] = 'Save mapping';
+$_['button_create_categories'] = 'Create selected categories';
+$_['button_update_quantities'] = 'Update quantities';
+$_['button_update_prices'] = 'Update prices';
+$_['button_update_products'] = 'Update prices and quantities';
+$_['button_save'] = 'Save';
+
+$_['error_feed'] = 'Excetra feed is unavailable. HTTP: %s. %s';
+$_['error_xml'] = 'Excetra feed is not valid XML.';
+$_['error_selected'] = 'Select at least one product to import.';
+$_['error_category_selected'] = 'Select at least one Excetra category to create.';
+$_['error_product_not_found'] = 'Product was not found.';
+$_['error_excetra_product_not_found'] = 'Product was not found in the Excetra feed.';
+$_['error_excetra_images_not_found'] = 'The Excetra feed has no images for this product.';
