@@ -604,7 +604,18 @@ $(document).on('click', '#button-payment-method', function() {
 {% endif %}// Close if logged php
 
 // Payment Method
-function reloadPaymentMethod() {
+{% if cart_module %}
+var quickCheckoutCartTimer = null;
+
+function scheduleCartLoad() {
+	clearTimeout(quickCheckoutCartTimer);
+	quickCheckoutCartTimer = setTimeout(function() {
+		loadCart();
+	}, 100);
+}
+{% endif %}
+
+function reloadPaymentMethod(callback) {
 	$.ajax({
 		url: 'index.php?route=extension/quickcheckout/payment_method',
 		type: 'post',
@@ -622,6 +633,14 @@ function reloadPaymentMethod() {
 			{% if load_screen %} 
 			$.unblockUI();
 			{% endif %} 
+
+			if (typeof callback == 'function') {
+				callback();
+			} else {
+				{% if cart_module %}
+				scheduleCartLoad();
+				{% endif %}
+			}
 		},
 		{% if debug %} 
 		error: function(xhr, ajaxOptions, thrownError) {
@@ -631,7 +650,7 @@ function reloadPaymentMethod() {
 	});
 }
 
-function reloadPaymentMethodById(address_id) {
+function reloadPaymentMethodById(address_id, callback) {
 	$.ajax({
 		url: 'index.php?route=extension/quickcheckout/payment_method&address_id=' + address_id,
 		type: 'post',
@@ -649,6 +668,14 @@ function reloadPaymentMethodById(address_id) {
 			{% if load_screen %} 
 			$.unblockUI();
 			{% endif %} 
+
+			if (typeof callback == 'function') {
+				callback();
+			} else {
+				{% if cart_module %}
+				scheduleCartLoad();
+				{% endif %}
+			}
 		},
 		{% if debug %} 
 		error: function(xhr, ajaxOptions, thrownError) {
@@ -719,6 +746,34 @@ function validatePaymentMethod() {
 				moduleLoaded($('#shipping-method'), {{ loading_display }} );
 				
 				$('#shipping-method .quickcheckout-content').html(html);
+
+				{% if shipping_reload %}
+					{% if not logged %}
+						reloadPaymentMethod(function() {
+							{% if cart_module %}
+							scheduleCartLoad();
+							{% endif %}
+						});
+					{% else %}
+						if ($('#payment-address input[name=\'payment_address\']:checked').val() == 'new') {
+							reloadPaymentMethod(function() {
+								{% if cart_module %}
+								scheduleCartLoad();
+								{% endif %}
+							});
+						} else {
+							reloadPaymentMethodById($('#payment-address select[name=\'address_id\']').val(), function() {
+								{% if cart_module %}
+								scheduleCartLoad();
+								{% endif %}
+							});
+						}
+					{% endif %}
+				{% else %}
+					{% if cart_module %}
+					scheduleCartLoad();
+					{% endif %}
+				{% endif %}
 			},
 			{% if debug %} 
 			error: function(xhr, ajaxOptions, thrownError) {
@@ -742,6 +797,26 @@ function validatePaymentMethod() {
 				moduleLoaded($('#shipping-method'), {{ loading_display }} );
 				
 				$('#shipping-method .quickcheckout-content').html(html);
+
+				{% if shipping_reload %}
+					if ($('#payment-address input[name=\'payment_address\']:checked').val() == 'new') {
+						reloadPaymentMethod(function() {
+							{% if cart_module %}
+							scheduleCartLoad();
+							{% endif %}
+						});
+					} else {
+						reloadPaymentMethodById($('#payment-address select[name=\'address_id\']').val(), function() {
+							{% if cart_module %}
+							scheduleCartLoad();
+							{% endif %}
+						});
+					}
+				{% else %}
+					{% if cart_module %}
+					scheduleCartLoad();
+					{% endif %}
+				{% endif %}
 			},
 			{% if debug %} 
 			error: function(xhr, ajaxOptions, thrownError) {
@@ -940,7 +1015,7 @@ function loadHeaderCart() {
 	$.ajax({
 		url: 'index.php?route=extension/quickcheckout/cart/update',
 		type: 'post',
-		data: $('#cart1 :input'),
+		data: '',
 		dataType: 'json',
 		cache: false,
 		success: function(json) {

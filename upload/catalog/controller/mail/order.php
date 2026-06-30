@@ -280,23 +280,12 @@ class ControllerMailOrder extends Controller {
 			$from = $this->config->get('config_email');
 		}
 		
-		$mail = new Mail($this->config->get('config_mail_engine'));
-		$mail->parameter = $this->config->get('config_mail_parameter');
-		$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
-		$mail->smtp_username = $this->config->get('config_mail_smtp_username');
-		$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
-		$mail->smtp_port = $this->config->get('config_mail_smtp_port');
-		$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+		$sender = html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8');
+		$subject = html_entity_decode(sprintf($language->get('text_subject'), $order_info['store_name'], $order_info['order_id']), ENT_QUOTES, 'UTF-8');
+		$html = $this->load->view('mail/order_add', $data);
 
-		$mail->setTo($order_info['email']);
-		$mail->setFrom($from);
-		$mail->setSender(html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8'));
-		$mail->setSubject(html_entity_decode(sprintf($language->get('text_subject'), $order_info['store_name'], $order_info['order_id']), ENT_QUOTES, 'UTF-8'));
-		$mail->setHtml($this->load->view('mail/order_add', $data));
-		$mail->send();
-
-        $mail->setTo($this->config->get('config_email'));
-        $mail->send();
+		$this->sendOrderMail($order_info['email'], $from, $sender, $subject, $html, '', 'customer order #' . $order_info['order_id']);
+		$this->sendOrderMail($this->config->get('config_email'), $from, $sender, $subject, $html, '', 'store copy order #' . $order_info['order_id']);
 	}
 	
 	public function edit($order_info, $order_status_id, $comment) {
@@ -338,20 +327,11 @@ class ControllerMailOrder extends Controller {
 			$from = $this->config->get('config_email');
 		}
 		
-		$mail = new Mail($this->config->get('config_mail_engine'));
-		$mail->parameter = $this->config->get('config_mail_parameter');
-		$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
-		$mail->smtp_username = $this->config->get('config_mail_smtp_username');
-		$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
-		$mail->smtp_port = $this->config->get('config_mail_smtp_port');
-		$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+		$sender = html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8');
+		$subject = html_entity_decode(sprintf($language->get('text_subject'), $order_info['store_name'], $order_info['order_id']), ENT_QUOTES, 'UTF-8');
+		$text = $this->load->view('mail/order_edit', $data);
 
-		$mail->setTo($order_info['email']);
-		$mail->setFrom($from);
-		$mail->setSender(html_entity_decode($order_info['store_name'], ENT_QUOTES, 'UTF-8'));
-		$mail->setSubject(html_entity_decode(sprintf($language->get('text_subject'), $order_info['store_name'], $order_info['order_id']), ENT_QUOTES, 'UTF-8'));
-		$mail->setText($this->load->view('mail/order_edit', $data));
-		$mail->send();
+		$this->sendOrderMail($order_info['email'], $from, $sender, $subject, '', $text, 'customer order update #' . $order_info['order_id']);
 	}
 	
 	// Admin Alert Mail
@@ -493,6 +473,60 @@ class ControllerMailOrder extends Controller {
 					$mail->send();
 				}
 			}
+		}
+	}
+
+	protected function sendOrderMail($to, $from, $sender, $subject, $html = '', $text = '', $context = '') {
+		$to = trim((string)$to);
+		$from = trim((string)$from);
+
+		if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+			$this->log->write('Order mail skipped' . ($context ? ' (' . $context . ')' : '') . ': invalid recipient "' . $to . '"');
+
+			return false;
+		}
+
+		if (!$from || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+			$fallback = trim((string)$this->config->get('config_email'));
+
+			if ($fallback && filter_var($fallback, FILTER_VALIDATE_EMAIL)) {
+				$from = $fallback;
+			} else {
+				$this->log->write('Order mail skipped' . ($context ? ' (' . $context . ')' : '') . ': invalid sender "' . $from . '"');
+
+				return false;
+			}
+		}
+
+		try {
+			$mail = new Mail($this->config->get('config_mail_engine'));
+			$mail->parameter = $this->config->get('config_mail_parameter');
+			$mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+			$mail->smtp_username = $this->config->get('config_mail_smtp_username');
+			$mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+			$mail->smtp_port = $this->config->get('config_mail_smtp_port');
+			$mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+
+			$mail->setTo($to);
+			$mail->setFrom($from);
+			$mail->setSender($sender);
+			$mail->setSubject($subject);
+
+			if ($html) {
+				$mail->setHtml($html);
+			}
+
+			if ($text) {
+				$mail->setText($text);
+			}
+
+			$mail->send();
+
+			return true;
+		} catch (Exception $e) {
+			$this->log->write('Order mail failed' . ($context ? ' (' . $context . ')' : '') . ': ' . $e->getMessage());
+
+			return false;
 		}
 	}
 }

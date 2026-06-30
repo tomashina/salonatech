@@ -180,13 +180,6 @@
       {% endif %}#}
   });
 
-    {% if payment_reload %}
-  $(document).ready(function() {
-    $('#payment-method input[name=\'payment_method\']:checked, #payment-method select[name=\'payment_method\']').trigger('change');
-  });
-    {% endif %}
-
-
   /* Custom fj.agmedia functions */
   function send_XHR_request_change() {
         {% if not logged %}

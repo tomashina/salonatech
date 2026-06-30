@@ -7,7 +7,8 @@ class ControllerExtensionQuickCheckoutCart extends Controller {
 		// Totals
 		$this->load->model('setting/extension');
 		
-		$total_data = array();					
+		$total_data = array();
+		$totals = array();
 		$total = 0;
 		$taxes = $this->cart->getTaxes();
 		

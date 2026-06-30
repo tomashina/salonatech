@@ -5321,6 +5321,20 @@ a.button-circle {
     background:#151414;
     color:#ffffff;
 }
+#gallery .main-image .badge.extended_warranty_badge {
+    top:15px;
+    right:25px;
+    left:auto;
+    width:130px;
+    height:42px;
+    background:#d71920;
+    color:#ffffff;
+}
+#gallery .main-image .badge.extended_warranty_badge i {
+    padding:0 8px;
+    font-size:13px;
+    line-height:16px;
+}
 .single-product .image .icons-wrapper {
     position:absolute;
     text-align:center;
@@ -6425,6 +6439,26 @@ hr {
 }
 .product-info .table-cell.right p.info b {
     color:#00243d;
+}
+.product-info .table-cell.right p.product-warranty .warranty-label {
+    display:inline-block;
+    padding:2px 8px;
+    margin-left:4px;
+    background:#d71920;
+    color:#ffffff;
+    font-weight:600;
+    line-height:18px;
+}
+.product-info .table-cell.right p.product-availability,
+.product-info .table-cell.right p.product-availability b,
+.product-info .table-cell.right p.product-availability a {
+    color:#222222;
+}
+.product-info .table-cell.right p.product-availability a {
+    white-space:nowrap;
+}
+.product-info .table-cell.right p.product-availability .availability-separator {
+    margin:0 4px;
 }
 .product-info .table-cell.right p.info.tags a + a:before {
     content:",";

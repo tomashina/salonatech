@@ -36,6 +36,9 @@ $_['text_year']                = 'godina';
 $_['text_short_description']              = 'Osnovne značajke';
 $_['text_spec_description']              = 'Specifikacije';
 $_['text_tax_included']                 = '25% PDV uključeno';
+$_['text_standard_warranty']       = 'Minimalno 2 godine';
+$_['text_extended_warranty']       = '2+3 godine jamstva';
+$_['text_extended_warranty_badge'] = '2+3 godine jamstva';
 
 $_['text_rok']                 = 'Rok isporuke';
 $_['text_d']                 = 'dana';

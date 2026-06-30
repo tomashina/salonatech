@@ -10,6 +10,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title><?php echo $title; ?></title>
+<script>
+(function () {
+  var originalTitle = document.title;
+  var awayTitle = '👋 Hej vrati se!';
+  var blinkTimer = null;
+
+  function startBlinkingTitle() {
+    if (blinkTimer) {
+      return;
+    }
+
+    originalTitle = document.title === awayTitle ? originalTitle : document.title;
+    document.title = awayTitle;
+
+    blinkTimer = setInterval(function () {
+      document.title = document.title === awayTitle ? originalTitle : awayTitle;
+    }, 1000);
+  }
+
+  function stopBlinkingTitle() {
+    if (blinkTimer) {
+      clearInterval(blinkTimer);
+      blinkTimer = null;
+    }
+
+    document.title = originalTitle;
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      startBlinkingTitle();
+      return;
+    }
+
+    stopBlinkingTitle();
+  });
+}());
+</script>
 <base href="<?php echo $base; ?>" />
 <?php if ($description) { ?><meta name="description" content="<?php echo $description; ?>" /><?php } ?>
 <?php if ($keywords) { ?><meta name="keywords" content= "<?php echo $keywords; ?>" /><?php } ?>

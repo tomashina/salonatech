@@ -11,6 +11,10 @@ class ControllerStartupError extends Controller {
 		if (error_reporting() === 0) {
 			return false;
 		}
+
+		if (!(error_reporting() & $code)) {
+			return true;
+		}
 	
 		switch ($code) {
 			case E_NOTICE:

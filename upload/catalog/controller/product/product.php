@@ -250,16 +250,18 @@ class ControllerProductProduct extends Controller {
 
 			$data['tab_review'] = sprintf($this->language->get('tab_review'), $product_info['reviews']);
 
-			$data['product_id'] = (int)$this->request->get['product_id'];
-			$data['manufacturer'] = $product_info['manufacturer'];
-			$data['manufacturers'] = $this->url->link('product/manufacturer/info', 'manufacturer_id=' . $product_info['manufacturer_id']);
-			$data['model'] = $product_info['model'];
-			$data['reward'] = $product_info['reward'];
-			$data['points'] = $product_info['points'];
-			$data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
+				$data['product_id'] = (int)$this->request->get['product_id'];
+				$data['manufacturer'] = $product_info['manufacturer'];
+				$data['manufacturers'] = $this->url->link('product/manufacturer/info', 'manufacturer_id=' . $product_info['manufacturer_id']);
+				$data['model'] = $product_info['model'];
+				$data['reward'] = $product_info['reward'];
+				$data['points'] = $product_info['points'];
+				$data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
+				$data['extended_warranty'] = in_array(utf8_strtolower(trim($product_info['manufacturer'])), array('candy', 'beko', 'whirlpool', 'electrolux', 'aeg'));
+				$data['whatsapp_availability_url'] = 'https://wa.me/385915970215?text=' . rawurlencode('Pozdrav, zanima me dostupnost artikla: ' . $product_info['name'] . ' - ' . html_entity_decode($this->url->link('product/product', 'product_id=' . (int)$this->request->get['product_id'], true), ENT_QUOTES, 'UTF-8'));
 
 
-			$data['isbn'] = $product_info['isbn'];
+				$data['isbn'] = $product_info['isbn'];
 
 			if ($product_info['quantity'] <= 0) {
 				$data['stock'] = $product_info['stock_status'];

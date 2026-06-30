@@ -472,6 +472,28 @@ class ModelCatalogProduct extends Model {
 	}
 
 	public function getTotalProducts($data = array()) {
+		static $product_total_runtime = array();
+
+		$cache_data = $data;
+		ksort($cache_data);
+
+		$cache_key = 'product.total.' . (int)$this->config->get('config_language_id') . '.' . (int)$this->config->get('config_store_id') . '.' . (int)$this->config->get('config_customer_group_id') . '.' . md5(json_encode($cache_data));
+		$use_persistent_cache = empty($data['filter_name']) && empty($data['filter_tag']);
+
+		if (isset($product_total_runtime[$cache_key])) {
+			return $product_total_runtime[$cache_key];
+		}
+
+		if ($use_persistent_cache) {
+			$product_total = $this->cache->get($cache_key);
+
+			if ($product_total !== false) {
+				$product_total_runtime[$cache_key] = (int)$product_total;
+
+				return $product_total_runtime[$cache_key];
+			}
+		}
+
 		$sql = "SELECT COUNT(DISTINCT p.sku) AS total";
 
 		if (!empty($data['filter_category_id'])) {
@@ -569,8 +591,14 @@ class ModelCatalogProduct extends Model {
 		}
 
 		$query = $this->db->query($sql);
+		$product_total = (int)$query->row['total'];
+		$product_total_runtime[$cache_key] = $product_total;
 
-		return $query->row['total'];
+		if ($use_persistent_cache) {
+			$this->cache->set($cache_key, $product_total);
+		}
+
+		return $product_total;
 	}
 
 	public function getProfile($product_id, $recurring_id) {

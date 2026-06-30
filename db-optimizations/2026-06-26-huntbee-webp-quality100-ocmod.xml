@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>Webp Compression Quality 100 Force Fix</name>
+	<version>3.2.2</version>
+	<author>HuntBee OpenCart Services</author>
+	<link>https://www.huntbee.com</link>
+	<code>huntbee_webp</code>
+
+	<file path="catalog/model/tool/image.php">
+		<operation>
+			<search><![CDATA[class ModelToolImage extends Model {]]></search>
+			<add position="before"><![CDATA[
+			//HUNTBEE WEBP
+			require_once DIR_SYSTEM . 'library/vendor/huntbee-webp/autoload.php';
+			//HUNTBEE WEBP
+			]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[$image_new = str_replace(' ', '%20', $image_new);]]></search>
+			<add position="before"><![CDATA[
+			//HUNTBEE WEBP
+			if (strpos($image_new, '.webp') === false && is_file(DIR_IMAGE . $image_new)) {
+				$webp_file = utf8_substr($image_new, 0, utf8_strrpos($image_new, '.'));
+				$webp_file = str_replace('cache/', 'webp/', $webp_file) . '.webp';
+
+				if (!is_file(DIR_IMAGE . $webp_file) || filemtime(DIR_IMAGE . $image_new) > filemtime(DIR_IMAGE . $webp_file)) {
+					list($webp_width, $webp_height, $webp_type) = @getimagesize(DIR_IMAGE . $image_new);
+
+					if (in_array($webp_type, array(IMAGETYPE_PNG, IMAGETYPE_JPEG))) {
+						$webp_destination = DIR_IMAGE . $webp_file;
+
+						if (!is_dir(dirname($webp_destination))) {
+							@mkdir(dirname($webp_destination), 0777, true);
+						}
+
+						$options = array(
+							'quality' => 100,
+							'max-quality' => 100,
+							'default-quality' => 100,
+							'alpha-quality' => 100
+						);
+
+						try {
+							\WebPConvert\WebPConvert::convert(DIR_IMAGE . $image_new, $webp_destination, $options);
+						} catch (Exception $e) {
+							$this->log->write('Extension - Huntbee WebP Compression (Auto): Issue while processing (image) path ' . DIR_IMAGE . $image_new . '. Issue: ' . $e->getMessage());
+						}
+					}
+				}
+
+				if (is_file(DIR_IMAGE . $webp_file)) {
+					$image_new = $webp_file;
+				}
+			}
+			//HUNTBEE WEBP
+			]]></add>
+		</operation>
+	</file>
+</modification>

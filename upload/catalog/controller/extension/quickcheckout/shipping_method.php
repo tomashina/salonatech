@@ -186,6 +186,14 @@ class ControllerExtensionQuickCheckoutShippingMethod extends Controller {
 		if (!$exists) {
 			$data['code'] = $stored_code;
 		}
+
+		if ($data['code']) {
+			$shipping = explode('.', $data['code']);
+
+			if (isset($shipping[0]) && isset($shipping[1]) && isset($this->session->data['shipping_methods'][$shipping[0]]['quote'][$shipping[1]])) {
+				$this->session->data['shipping_method'] = $this->session->data['shipping_methods'][$shipping[0]]['quote'][$shipping[1]];
+			}
+		}
 		
 		if (isset($this->request->post['delivery_date'])) {
 			$data['delivery_date'] = $this->request->post['delivery_date'];

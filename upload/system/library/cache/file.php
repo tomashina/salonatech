@@ -13,8 +13,8 @@ class File {
 				$time = substr(strrchr($file, '.'), 1);
 
 				if ($time < time()) {
-					if (file_exists($file)) {
-						unlink($file);
+					if (is_file($file)) {
+						@unlink($file);
 					}
 				}
 			}
@@ -64,8 +64,8 @@ class File {
 
 		if ($files) {
 			foreach ($files as $file) {
-				if (file_exists($file)) {
-					unlink($file);
+				if (is_file($file)) {
+					@unlink($file);
 				}
 			}
 		}

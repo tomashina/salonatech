@@ -32,6 +32,9 @@ $_['text_month']               = 'month';
 $_['text_year']                = 'year';
 
 $_['text_tax_included']                 = '25% VAT included';
+$_['text_standard_warranty']       = 'Minimum 2 years';
+$_['text_extended_warranty']       = '2+3 years warranty';
+$_['text_extended_warranty_badge'] = '2+3 years warranty';
 
 $_['text_rok']                 = 'Delivery time';
 $_['text_d']                 = 'days';

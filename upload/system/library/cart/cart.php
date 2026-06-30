@@ -1,7 +1,12 @@
 <?php
 namespace Cart;
 class Cart {
-	private $data = array();
+	private $data = null;
+	private $weight_total = null;
+	private $sub_total = null;
+	private $taxes = null;
+	private $total = null;
+	private $product_total = null;
 
 	public function __construct($registry) {
 		$this->config = $registry->get('config');
@@ -31,6 +36,10 @@ class Cart {
 	}
 
 	public function getProducts() {
+		if ($this->data !== null) {
+			return $this->data;
+		}
+
 		$product_data = array();
 
 		$cart_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "cart WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
@@ -266,7 +275,9 @@ class Cart {
 			}
 		}
 
-		return $product_data;
+		$this->data = $product_data;
+
+		return $this->data;
 	}
 
 	public function add($product_id, $quantity = 1, $option = array(), $recurring_id = 0) {
@@ -277,18 +288,26 @@ class Cart {
 		} else {
 			$this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = (quantity + " . (int)$quantity . ") WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "' AND product_id = '" . (int)$product_id . "' AND recurring_id = '" . (int)$recurring_id . "' AND `option` = '" . $this->db->escape(json_encode($option)) . "'");
 		}
+
+		$this->clearCache();
 	}
 
 	public function update($cart_id, $quantity) {
 		$this->db->query("UPDATE " . DB_PREFIX . "cart SET quantity = '" . (int)$quantity . "' WHERE cart_id = '" . (int)$cart_id . "' AND api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+
+		$this->clearCache();
 	}
 
 	public function remove($cart_id) {
 		$this->db->query("DELETE FROM " . DB_PREFIX . "cart WHERE cart_id = '" . (int)$cart_id . "' AND api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+
+		$this->clearCache();
 	}
 
 	public function clear() {
 		$this->db->query("DELETE FROM " . DB_PREFIX . "cart WHERE api_id = '" . (isset($this->session->data['api_id']) ? (int)$this->session->data['api_id'] : 0) . "' AND customer_id = '" . (int)$this->customer->getId() . "' AND session_id = '" . $this->db->escape($this->session->getId()) . "'");
+
+		$this->clearCache();
 	}
 
 	public function getRecurringProducts() {
@@ -304,6 +323,10 @@ class Cart {
 	}
 
 	public function getWeight() {
+		if ($this->weight_total !== null) {
+			return $this->weight_total;
+		}
+
 		$weight = 0;
 
 		foreach ($this->getProducts() as $product) {
@@ -312,20 +335,32 @@ class Cart {
 			}
 		}
 
-		return $weight;
+		$this->weight_total = $weight;
+
+		return $this->weight_total;
 	}
 
 	public function getSubTotal() {
+		if ($this->sub_total !== null) {
+			return $this->sub_total;
+		}
+
 		$total = 0;
 
 		foreach ($this->getProducts() as $product) {
 			$total += $product['total'];
 		}
 
-		return $total;
+		$this->sub_total = $total;
+
+		return $this->sub_total;
 	}
 
 	public function getTaxes() {
+		if ($this->taxes !== null) {
+			return $this->taxes;
+		}
+
 		$tax_data = array();
 
 		foreach ($this->getProducts() as $product) {
@@ -342,20 +377,32 @@ class Cart {
 			}
 		}
 
-		return $tax_data;
+		$this->taxes = $tax_data;
+
+		return $this->taxes;
 	}
 
 	public function getTotal() {
+		if ($this->total !== null) {
+			return $this->total;
+		}
+
 		$total = 0;
 
 		foreach ($this->getProducts() as $product) {
 			$total += $this->tax->calculate($product['price'], $product['tax_class_id'], $this->config->get('config_tax')) * $product['quantity'];
 		}
 
-		return $total;
+		$this->total = $total;
+
+		return $this->total;
 	}
 
 	public function countProducts() {
+		if ($this->product_total !== null) {
+			return $this->product_total;
+		}
+
 		$product_total = 0;
 
 		$products = $this->getProducts();
@@ -364,7 +411,9 @@ class Cart {
 			$product_total += $product['quantity'];
 		}
 
-		return $product_total;
+		$this->product_total = $product_total;
+
+		return $this->product_total;
 	}
 
 	public function hasProducts() {
@@ -403,5 +452,14 @@ class Cart {
 		}
 
 		return false;
+	}
+
+	private function clearCache() {
+		$this->data = null;
+		$this->weight_total = null;
+		$this->sub_total = null;
+		$this->taxes = null;
+		$this->total = null;
+		$this->product_total = null;
 	}
 }

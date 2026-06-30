@@ -1,0 +1,288 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-total" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-total" class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <select name="total_paycharge_status" id="input-status" class="form-control">
+                {% if total_paycharge_status %}
+                <option value="1" selected="selected">{{ text_enabled }}</option>
+                <option value="0">{{ text_disabled }}</option>
+                {% else %}
+                <option value="1">{{ text_enabled }}</option>
+                <option value="0" selected="selected">{{ text_disabled }}</option>
+                {% endif %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-sort-order"><span data-toggle="tooltip" title="{{ help_sort_order }}">{{ entry_sort_order }}</span></label>
+            <div class="col-sm-10">
+              <input type="text" name="total_paycharge_sort_order" value="{{ total_paycharge_sort_order }}" placeholder="{{ entry_sort_order }}" id="input-sort-order" class="form-control" />
+            </div>
+          </div>
+          <div class="table-responsive">
+          <table id="total-paycharge" class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <td class="text-left">{{ column_rules }}</td>
+                <td class="text-left">{{ column_charge }}</td>
+                <td class="text-left">{{ column_description }}</td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              {% set total_paycharge_row = 0 %}
+              {% for total_paycharge in total_paycharges %}
+              <tr id="total-paycharge-row{{ total_paycharge_row }}">
+                <td class="text-left">
+                  <label class="control-label">{{ entry_payment_method }}</label>
+                  <select name="total_paycharge[{{ total_paycharge_row }}][payment_method]" class="form-control">
+                    {% for payment in payments %}
+                    {% if payment.code == total_paycharge['payment_method'] %}
+                    <option value="{{ payment.code }}" selected="selected">{{ payment.name }}</option>
+                    {% else %}
+                    <option value="{{ payment.code }}">{{ payment.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
+
+				  <label class="control-label">{{ entry_customer_group }}</label>
+                  <select name="total_paycharge[{{ total_paycharge_row }}][customer_group_id]" class="form-control">
+                    <option value="0">{{ text_all_customers }}</option>
+                    {% for customer_group in customer_groups %}
+                    {% if customer_group.customer_group_id == total_paycharge['customer_group_id'] %}
+                    <option value="{{ customer_group.customer_group_id }}" selected="selected">{{ customer_group.name }}</option>
+                    {% else %}
+                    <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
+                  <label class="control-label"><span data-toggle="tooltip" title="{{ help_geo_zone }} ">{{ entry_geo_zone }}</span></label>
+                  <select name="total_paycharge[{{ total_paycharge_row }}][geo_zone_id]" class="form-control">
+                    <option value="0">{{ text_all_zones }}</option>
+                    {% for geo_zone in geo_zones %}
+                    {% if geo_zone.geo_zone_id == total_paycharge['geo_zone_id'] %}
+                    <option value="{{ geo_zone.geo_zone_id }}" selected="selected">{{ geo_zone.name }}</option>
+                    {% else %}
+                    <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
+
+                  <label class="control-label">{{ entry_cart_range }}</label>
+                  <div class="input-group">
+                    <span class="input-group-addon">{{ entry_cart_min }}</span>
+					<input type="text" name="total_paycharge[{{ total_paycharge_row }}][cart_min]" value="{{ total_paycharge.cart_min }}" class="form-control" />
+                    <span class="input-group-addon">{{ entry_cart_max }}</span>
+					<input type="text" name="total_paycharge[{{ total_paycharge_row }}][cart_max]" value="{{ total_paycharge.cart_max }}" class="form-control" />
+                  </div>
+                  {% if error_cart_range[total_paycharge_row] %}
+                  <div class="text-danger">{{ error_cart_range[total_paycharge_row] }}</div>
+                  {% endif %}
+                </td>
+                <td class="text-left">
+                  <div class="input-group">
+                    <span class="input-group-addon" style="min-width:40px;">{{ entry_percentage[0] }}</span>
+                    <input type="text" name="total_paycharge[{{ total_paycharge_row }}][valuep]" value="{{ total_paycharge['valuep'] }}" placeholder="{{ entry_percentage[1] }}" class="form-control" />
+                    <span class="input-group-addon" title="{{ entry_formula[1] }}">
+                      {% if total_paycharge.formula %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][formula]" value="1" checked="checked" />
+                      {% else %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][formula]" value="1" />
+                      {% endif %}
+                      {{ entry_formula[0] }}
+                    </span>
+                  </div>
+                  <div class="input-group">
+                    <span class="input-group-addon" style="min-width:40px;">{{ entry_fixed[0] }}</span>
+                    <input type="text" name="total_paycharge[{{ total_paycharge_row }}][valuef]" value="{{ total_paycharge['valuef'] }}" placeholder="{{ entry_fixed[1] }}" class="form-control" />
+                  </div>
+                  {% if error_values[total_paycharge_row] %}
+                  <div class="text-danger">{{ error_values[total_paycharge_row] }}</div>
+                  {% endif %}
+                  <label class="control-label">{{ entry_tax_class }}</label>
+                  <select name="total_paycharge[{{ total_paycharge_row }}][tax_class_id]" class="form-control">
+                    <option value="0">{{ text_none }}</option>
+                    {% for tax_class in tax_classes %}
+                    {% if tax_class['tax_class_id'] == total_paycharge['tax_class_id'] %}
+                    <option value="{{ tax_class['tax_class_id'] }}" selected="selected">{{ tax_class['title'] }}</option>
+                    {% else %}
+                    <option value="{{ tax_class['tax_class_id'] }}">{{ tax_class['title'] }}</option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
+
+				  <label class="control-label">{{ entry_shows }}</label>
+                  <div class="checkbox">
+                    <label>
+                      {% if total_paycharge.step5vals %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][step5vals]" value="1" checked="checked" />
+                      {% else %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][step5vals]" value="1" />
+                      {% endif %}
+                      {{ entry_show_step5vals }}
+                    </label>
+                  </div>
+                  <div class="checkbox">
+                    <label>
+                      {% if total_paycharge.step5calc %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][step5calc]" value="1" checked="checked" />
+                      {% else %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][step5calc]" value="1" />
+                      {% endif %}
+                      {{ entry_show_step5calc }}
+                    </label>
+                  </div>
+                  <div class="checkbox">
+                    <label>
+                      {% if total_paycharge.step6 %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][step6]" value="1" checked="checked" />
+                      {% else %}
+                      <input type="checkbox" name="total_paycharge[{{ total_paycharge_row }}][step6]" value="1" />
+                      {% endif %}
+                      {{ entry_show_step6 }}
+                    </label>
+                  </div>
+
+                </td>
+                <td class="text-left">
+                  {% for language in languages %}
+                  <div class="input-group"><span class="input-group-addon"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span>
+					<input type="text" name="total_paycharge[{{ total_paycharge_row }}][total_paycharge_description][{{ language.language_id }}][name]" value="{{ total_paycharge.total_paycharge_description[language.language_id] ? total_paycharge.total_paycharge_description[language.language_id].name }}" class="form-control" />
+				  </div>
+                  {% if error_name[total_paycharge_row][language.language_id] %}
+                  <div class="text-danger">{{ error_name[total_paycharge_row][language.language_id] }}</div>
+                  {% endif %}
+                  {% endfor %}
+                </td>
+                <td class="text-left"><button type="button" onclick="$('#total-paycharge-row{{ total_paycharge_row }}').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+              </tr>
+              {% set total_paycharge_row = total_paycharge_row + 1 %}
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3"></td>
+                <td class="text-left"><button type="button" onclick="addPaycharge();" data-toggle="tooltip" title="{{ button_paycharge_add }}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+              </tr>
+            </tfoot>
+          </table>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript"><!--
+var total_paycharge_row = {{ total_paycharge_row }};
+
+function addPaycharge() {
+	html  = '<tr id="total-paycharge-row' + total_paycharge_row + '">';
+	html += '  <td class="text-left">';
+	html += '    <label class="control-label">{{ entry_payment_method }}</label>';
+	html += '    <select name="total_paycharge[' + total_paycharge_row + '][payment_method]" class="form-control">';
+	{% for payment in payments %}
+	html += '      <option value="{{ payment.code }}">{{ payment.name|e }}</option>';
+	{% endfor %}
+	html += '    </select>';
+
+	html += '    <label class="control-label">{{ entry_customer_group }}</label>';
+	html += '    <select name="total_paycharge[' + total_paycharge_row + '][customer_group_id]" class="form-control">';
+	html += '      <option value="0">{{ text_all_customers }}</option>';
+	{% for customer_group in customer_groups %}
+	html += '      <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>';
+	{% endfor %}
+	html += '    </select>';
+	html += '    <label class="control-label"><span data-toggle="tooltip" title="{{ help_geo_zone }}">{{ entry_geo_zone }}</span></label>';
+	html += '    <select name="total_paycharge[' + total_paycharge_row + '][geo_zone_id]" class="form-control">';
+	html += '      <option value="0">{{ text_all_zones }}</option>';
+	{% for geo_zone in geo_zones %}
+	html += '      <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>';
+	{% endfor %}
+	html += '    </select>';
+
+	html += '    <label class="control-label">{{ entry_cart_range }}</label>';
+	html += '    <div class="input-group">';
+	html += '      <span class="input-group-addon">{{ entry_cart_min }}</span>';
+	html += '      <input type="text" name="total_paycharge[' + total_paycharge_row + '][cart_min]" value="" class="form-control" />';
+	html += '      <span class="input-group-addon">{{ entry_cart_max }}</span>';
+	html += '      <input type="text" name="total_paycharge[' + total_paycharge_row + '][cart_max]" value="" class="form-control" />';
+	html += '    </div>';
+	html += '  </td>';
+	html += '  <td class="text-left">';
+	html += '    <div class="input-group">';
+	html += '      <span class="input-group-addon" style="min-width:40px;">{{ entry_percentage[0] }}</span>';
+	html += '      <input type="text" name="total_paycharge[' + total_paycharge_row + '][valuep]" value="" placeholder="{{ entry_percentage[1] }}" class="form-control" />';
+	html += '      <span class="input-group-addon" title="{{ entry_formula[1] }}">';
+	html += '        <input type="checkbox" name="total_paycharge[' + total_paycharge_row + '][formula]" value="1" />';
+	html += '        {{ entry_formula[0] }}';
+	html += '      </span>';
+	html += '    </div>';
+	html += '    <div class="input-group">';
+	html += '      <span class="input-group-addon" style="min-width:40px;">{{ entry_fixed[0] }}</span>';
+	html += '      <input type="text" name="total_paycharge[' + total_paycharge_row + '][valuef]" value="" placeholder="{{ entry_fixed[1] }}" class="form-control" />';
+	html += '    </div>';
+	html += '    <label class="control-label">{{ entry_tax_class }}</label>';
+	html += '    <select name="total_paycharge[' + total_paycharge_row + '][tax_class_id]" class="form-control">';
+	html += '      <option value="0">{{ text_none }}</option>';
+	{% for tax_class in tax_classes %}
+	html += '      <option value="{{ tax_class.tax_class_id }}">{{ tax_class.title }}</option>';
+	{% endfor %}
+	html += '    </select>';
+
+	html += '    <label class="control-label">{{ entry_shows }}</label>';
+	html += '    <div class="checkbox">';
+	html += '      <label><input type="checkbox" name="total_paycharge[' + total_paycharge_row + '][step5vals]" value="1" />';
+	html += '        {{ entry_show_step5vals }}</label>';
+	html += '    </div>';
+	html += '    <div class="checkbox">';
+	html += '      <label><input type="checkbox" name="total_paycharge[' + total_paycharge_row + '][step5calc]" value="1" />';
+	html += '        {{ entry_show_step5calc }}</label>';
+	html += '    </div>';
+	html += '    <div class="checkbox">';
+	html += '      <label><input type="checkbox" name="total_paycharge[' + total_paycharge_row + '][step6]" value="1" />';
+	html += '        {{ entry_show_step6 }}</label>';
+	html += '    </div>';
+
+	html += '  </td>';
+	html += '  <td class="text-left">';
+	{% for language in languages %}
+	html += '    <div class="input-group"><span class="input-group-addon"><img src="language/{{ language.code }}/{{ language.code }}.png" title="{{ language.name }}" /></span>';
+	html += '      <input type="text" name="total_paycharge[' + total_paycharge_row + '][total_paycharge_description][{{ language.anguage_id }}][name]" value="" class="form-control" />';
+	html += '    </div>';
+	{% endfor %}
+	html += '  </td>';
+	html += '  <td class="text-left"><button type="button" onclick="$(\'#total-paycharge-row' + total_paycharge_row + '\').remove();" data-toggle="tooltip" title="{{ button_remove }}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+	html += '</tr>';
+
+	$('#total-paycharge tbody').append(html);
+
+	total_paycharge_row++;
+}
+//--></script>
+{{ footer }}

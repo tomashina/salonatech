@@ -148,10 +148,6 @@ $('#shipping-method input[name=\'shipping_method\'], #shipping-method select[nam
 	{% endif %}
 });
 
-$(document).ready(function() {
-	$('#shipping-method input[name=\'shipping_method\']:checked, #shipping-method select[name=\'shipping_method\']').trigger('change');
-});
-
 {% if delivery and delivery_delivery_time == '1' %} 
 $(document).ready(function() {
 	$('input[name=\'delivery_date\']').datetimepicker({

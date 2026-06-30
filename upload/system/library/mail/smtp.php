@@ -126,7 +126,13 @@ class Smtp {
 
 				$this->handleReply($handle, 220, 'Error: STARTTLS not accepted from server!');
 
-				stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+				stream_context_set_option($handle, 'ssl', 'verify_peer', false);
+				stream_context_set_option($handle, 'ssl', 'verify_peer_name', false);
+				stream_context_set_option($handle, 'ssl', 'allow_self_signed', true);
+
+				if (!stream_socket_enable_crypto($handle, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+					throw new \Exception('Error: STARTTLS crypto negotiation failed!');
+				}
 			}
 
 			if (!empty($this->smtp_username) && !empty($this->smtp_password)) {

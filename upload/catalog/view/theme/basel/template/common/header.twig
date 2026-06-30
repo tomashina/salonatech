@@ -11,6 +11,44 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="google-site-verification" content="JZYE6lTXt0bMjmAkTQWZTl0tdU8HpxuXJcM74NUmpg4" />
 <title>{{ title }}</title>
+<script>
+(function () {
+  var originalTitle = document.title;
+  var awayTitle = '👋 Hej vrati se!';
+  var blinkTimer = null;
+
+  function startBlinkingTitle() {
+    if (blinkTimer) {
+      return;
+    }
+
+    originalTitle = document.title === awayTitle ? originalTitle : document.title;
+    document.title = awayTitle;
+
+    blinkTimer = setInterval(function () {
+      document.title = document.title === awayTitle ? originalTitle : awayTitle;
+    }, 1000);
+  }
+
+  function stopBlinkingTitle() {
+    if (blinkTimer) {
+      clearInterval(blinkTimer);
+      blinkTimer = null;
+    }
+
+    document.title = originalTitle;
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      startBlinkingTitle();
+      return;
+    }
+
+    stopBlinkingTitle();
+  });
+}());
+</script>
 <base href="{{ base }}" />
 <meta name="google-site-verification" content="eZXFBfY_q6xpP_ZT043YaAnDL4H8BkCPtxx3Atwko3o" />
 {% if description %}<meta name="description" content="{{ description }}" />{% endif %}

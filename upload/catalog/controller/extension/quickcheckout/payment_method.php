@@ -65,6 +65,7 @@ class ControllerExtensionQuickCheckoutPaymentMethod extends Controller {
 		if (!empty($payment_address)) {
 			// Totals
 			$total_data = array();
+			$totals = array();
 			$total = 0;
 			$taxes = $this->cart->getTaxes();
 			
@@ -182,6 +183,27 @@ class ControllerExtensionQuickCheckoutPaymentMethod extends Controller {
 		if (!$exists) {
 			$data['code'] = $stored_code;
 		}
+
+		if ($data['code'] && isset($this->session->data['payment_methods'][$data['code']])) {
+			$credit_card_name = isset($this->session->data['payment_method']['credit_card_name']) ? $this->session->data['payment_method']['credit_card_name'] : 'VISA';
+			$payment_plan = isset($this->session->data['payment_method']['payment_plan']) ? $this->session->data['payment_method']['payment_plan'] : '0000';
+
+			$this->session->data['payment_method'] = $this->session->data['payment_methods'][$data['code']];
+
+			if ($data['code'] == 'wspay') {
+				if (isset($this->request->post['CreditCardName'])) {
+					$this->session->data['payment_method']['credit_card_name'] = $this->request->post['CreditCardName'];
+				} else {
+					$this->session->data['payment_method']['credit_card_name'] = $credit_card_name;
+				}
+
+				if (isset($this->request->post['PaymentPlan'])) {
+					$this->session->data['payment_method']['payment_plan'] = $this->request->post['PaymentPlan'];
+				} else {
+					$this->session->data['payment_method']['payment_plan'] = $payment_plan;
+				}
+			}
+		}
 		
 		if (isset($this->request->post['comment'])) {
 			$data['comment'] = $this->request->post['comment'];
@@ -291,6 +313,11 @@ class ControllerExtensionQuickCheckoutPaymentMethod extends Controller {
 		
 		if (isset($this->request->post['payment_method']) && isset($this->session->data['payment_methods'][$this->request->post['payment_method']])) {
 			$this->session->data['payment_method'] = $this->session->data['payment_methods'][$this->request->post['payment_method']];
+
+			if ($this->request->post['payment_method'] == 'wspay') {
+				$this->session->data['payment_method']['credit_card_name'] = isset($this->request->post['CreditCardName']) ? $this->request->post['CreditCardName'] : 'VISA';
+				$this->session->data['payment_method']['payment_plan'] = isset($this->request->post['PaymentPlan']) ? $this->request->post['PaymentPlan'] : '0000';
+			}
 		}
 	}
 	
@@ -319,6 +346,7 @@ class ControllerExtensionQuickCheckoutPaymentMethod extends Controller {
 		if (!empty($payment_address)) {
 			// Totals
 			$total_data = array();
+			$totals = array();
 			$total = 0;
 			$taxes = $this->cart->getTaxes();
 			
@@ -408,6 +436,11 @@ class ControllerExtensionQuickCheckoutPaymentMethod extends Controller {
 
 		if (!$json) {
 			$this->session->data['payment_method'] = $this->session->data['payment_methods'][$this->request->post['payment_method']];
+
+			if ($this->request->post['payment_method'] == 'wspay') {
+				$this->session->data['payment_method']['credit_card_name'] = isset($this->request->post['CreditCardName']) ? $this->request->post['CreditCardName'] : 'VISA';
+				$this->session->data['payment_method']['payment_plan'] = isset($this->request->post['PaymentPlan']) ? $this->request->post['PaymentPlan'] : '0000';
+			}
 		  
 			$this->session->data['order_comment'] = strip_tags($this->request->post['comment']);
 			
