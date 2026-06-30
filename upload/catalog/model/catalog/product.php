@@ -386,72 +386,94 @@ class ModelCatalogProduct extends Model {
 	}
 
 	public function getProductRelated($product_id) {
-    $product_data = array();
-    $limit = 8;
-    $store_id = (int)$this->config->get('config_store_id');
+		$product_data = array();
+		$limit = 8;
+		$store_id = (int)$this->config->get('config_store_id');
 
-    // 1) kategorije trenutnog proizvoda
-    $cat_q = $this->db->query("
-        SELECT category_id
-        FROM " . DB_PREFIX . "product_to_category
-        WHERE product_id = " . (int)$product_id . "
-    ");
+		$category_query = $this->db->query("
+			SELECT p2c.category_id, COALESCE(MAX(cp.level), 0) AS level
+			FROM " . DB_PREFIX . "product_to_category p2c
+			LEFT JOIN " . DB_PREFIX . "category_path cp ON (p2c.category_id = cp.category_id)
+			WHERE p2c.product_id = '" . (int)$product_id . "'
+			GROUP BY p2c.category_id
+			ORDER BY level DESC
+		");
 
-    $category_ids = array();
-    foreach ($cat_q->rows as $row) {
-        $category_ids[] = (int)$row['category_id'];
-    }
+		$category_ids = array();
+		$max_level = null;
 
-    // 2) prvo iz iste kategorije (ako ima kategorija)
-    if (!empty($category_ids)) {
-        $in = implode(',', $category_ids);
+		foreach ($category_query->rows as $row) {
+			$level = (int)$row['level'];
 
-        $q = $this->db->query("
-            SELECT DISTINCT p.product_id
-            FROM " . DB_PREFIX . "product_to_category p2c
-            LEFT JOIN " . DB_PREFIX . "product p ON (p2c.product_id = p.product_id)
-            LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)
-            WHERE p2c.category_id IN (" . $in . ")
-              AND p.product_id != " . (int)$product_id . "
-              AND p.status = '1'
-              AND p.date_available <= NOW()
-              AND p2s.store_id = " . $store_id . "
-            ORDER BY RAND()
-            LIMIT " . (int)$limit . "
-        ");
+			if ($max_level === null) {
+				$max_level = $level;
+			}
 
-        foreach ($q->rows as $result) {
-            $pid = (int)$result['product_id'];
-            $product_data[$pid] = $this->getProduct($pid);
-        }
-    }
+			if ($level === $max_level) {
+				$category_ids[] = (int)$row['category_id'];
+			}
+		}
 
-    // 3) dopuni iz product_related ako nema dovoljno (opcionalno)
-    $need = $limit - count($product_data);
-    if ($need > 0) {
-        $rel = $this->db->query("
-            SELECT pr.related_id
-            FROM " . DB_PREFIX . "product_related pr
-            LEFT JOIN " . DB_PREFIX . "product p ON (pr.related_id = p.product_id)
-            LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)
-            WHERE pr.product_id = " . (int)$product_id . "
-              AND p.status = '1'
-              AND p.date_available <= NOW()
-              AND p2s.store_id = " . $store_id . "
-            ORDER BY RAND()
-            LIMIT " . (int)$need . "
-        ");
+		if (empty($category_ids)) {
+			return $product_data;
+		}
 
-        foreach ($rel->rows as $r) {
-            $rid = (int)$r['related_id'];
-            if (!isset($product_data[$rid])) {
-                $product_data[$rid] = $this->getProduct($rid);
-            }
-        }
-    }
+		$in = implode(',', $category_ids);
 
-    return $product_data;
-}
+		$query = $this->db->query("
+			SELECT DISTINCT p.product_id
+			FROM " . DB_PREFIX . "product_to_category p2c
+			LEFT JOIN " . DB_PREFIX . "product p ON (p2c.product_id = p.product_id)
+			LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)
+			WHERE p2c.category_id IN (" . $in . ")
+				AND p.product_id != '" . (int)$product_id . "'
+				AND p.status = '1'
+				AND p.date_available <= NOW()
+				AND p2s.store_id = '" . $store_id . "'
+			ORDER BY RAND()
+			LIMIT " . (int)$limit . "
+		");
+
+		foreach ($query->rows as $result) {
+			$product_info = $this->getProduct($result['product_id']);
+
+			if ($product_info) {
+				$product_data[$result['product_id']] = $product_info;
+			}
+		}
+
+		$need = $limit - count($product_data);
+
+		if ($need > 0) {
+			$exclude = array_merge(array((int)$product_id), array_keys($product_data));
+
+			$related_query = $this->db->query("
+				SELECT DISTINCT pr.related_id
+				FROM " . DB_PREFIX . "product_related pr
+				LEFT JOIN " . DB_PREFIX . "product p ON (pr.related_id = p.product_id)
+				LEFT JOIN " . DB_PREFIX . "product_to_category p2c ON (pr.related_id = p2c.product_id)
+				LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id)
+				WHERE pr.product_id = '" . (int)$product_id . "'
+					AND p2c.category_id IN (" . $in . ")
+					AND pr.related_id NOT IN (" . implode(',', $exclude) . ")
+					AND p.status = '1'
+					AND p.date_available <= NOW()
+					AND p2s.store_id = '" . $store_id . "'
+				ORDER BY RAND()
+				LIMIT " . (int)$need . "
+			");
+
+			foreach ($related_query->rows as $result) {
+				$product_info = $this->getProduct($result['related_id']);
+
+				if ($product_info) {
+					$product_data[$result['related_id']] = $product_info;
+				}
+			}
+		}
+
+		return $product_data;
+	}
 
 
 
